@@ -107,7 +107,7 @@ test("the collection chrome keeps the user-requested clutter out of the initial 
   assert.doesNotMatch(pageMarkup, /Collapse all/);
 });
 
-test("the sidebar navigation is text-only and starts with Context", async (t) => {
+test("the sidebar exposes only Context and Workflow as accessible view tabs", async (t) => {
   const vite = await createServer({
     appType: "custom",
     logLevel: "silent",
@@ -118,13 +118,39 @@ test("the sidebar navigation is text-only and starts with Context", async (t) =>
 
   const { AppSidebar } = await vite.ssrLoadModule("/src/components/AppSidebar.jsx");
   const sidebarMarkup = renderToStaticMarkup(
-    React.createElement(AppSidebar, { researchCutoff: "2026-08-23" }),
+    React.createElement(AppSidebar, {
+      activeView: "context",
+      onViewChange: () => {},
+      researchCutoff: "2026-08-23",
+    }),
   );
   const navigationMarkup = sidebarMarkup.match(/<nav[\s\S]*?<\/nav>/)?.[0] ?? "";
 
-  assert.match(navigationMarkup, /href="#overview"><span>Context<\/span>/);
-  assert.doesNotMatch(navigationMarkup, /Overview/);
+  assert.match(navigationMarkup, /role="tablist"/);
+  assert.equal((navigationMarkup.match(/role="tab"/g) ?? []).length, 2);
+  assert.ok(navigationMarkup.indexOf("Context") < navigationMarkup.indexOf("Workflow"));
+  assert.match(navigationMarkup, /aria-selected="true"/);
+  assert.doesNotMatch(navigationMarkup, /<a /);
+  assert.doesNotMatch(navigationMarkup, /Company|ICP &amp; market fit|Personas|Evidence notes/);
   assert.doesNotMatch(navigationMarkup, /<svg/);
+});
+
+test("the app defaults to Context while exposing the Workflow tab", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const pageMarkup = renderToStaticMarkup(React.createElement(App));
+
+  assert.match(pageMarkup, /role="tabpanel"/);
+  assert.match(pageMarkup, /Otera context artifacts/);
+  assert.match(pageMarkup, />Workflow</);
+  assert.doesNotMatch(pageMarkup, /Video Storyboarding Briefing/);
 });
 
 test("the workflow view uses registered sections and exact screenshot content", async (t) => {

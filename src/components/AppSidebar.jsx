@@ -1,22 +1,34 @@
-import {
-  Buildings,
-  ShieldCheck,
-  SquaresFour,
-  Target,
-  UsersThree,
-} from "@phosphor-icons/react";
+import { useRef } from "react";
 
-const navigationItems = [
-  { href: "#overview", label: "Overview", icon: SquaresFour },
-  { href: "#company", label: "Company", icon: Buildings },
-  { href: "#artifact-icp-context", label: "ICP & market fit", icon: Target },
-  { href: "#personas", label: "Personas", icon: UsersThree },
-  { href: "#evidence", label: "Evidence notes", icon: ShieldCheck },
+const viewItems = [
+  { id: "context", label: "Context" },
+  { id: "workflow", label: "Workflow" },
 ];
 
-export function AppSidebar({ researchCutoff }) {
+export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
+  const tabRefs = useRef([]);
+
+  const handleTabKeyDown = (event, index) => {
+    let nextIndex = null;
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (index - 1 + viewItems.length) % viewItems.length;
+    } else if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (index + 1) % viewItems.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = viewItems.length - 1;
+    }
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    onViewChange(viewItems[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
   return (
-    <aside className="app-sidebar" aria-label="Otera context navigation">
+    <aside className="app-sidebar" aria-label="Otera content navigation">
       <div className="workspace-identity">
         <span className="workspace-avatar" aria-hidden="true">
           OT
@@ -27,13 +39,30 @@ export function AppSidebar({ researchCutoff }) {
         </span>
       </div>
 
-      <nav className="sidebar-nav" aria-label="On this page">
-        {navigationItems.map(({ href, label, icon: Icon }) => (
-          <a href={href} key={href}>
-            <Icon size={17} weight="regular" aria-hidden="true" />
-            <span>{label}</span>
-          </a>
-        ))}
+      <nav aria-label="Content Lab views">
+        <div aria-label="Content Lab views" className="sidebar-nav" role="tablist">
+          {viewItems.map((item, index) => {
+            const selected = activeView === item.id;
+            return (
+              <button
+                aria-controls="content-library"
+                aria-selected={selected}
+                id={`${item.id}-tab`}
+                key={item.id}
+                onClick={() => onViewChange(item.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
+                ref={(node) => {
+                  tabRefs.current[index] = node;
+                }}
+                role="tab"
+                tabIndex={selected ? 0 : -1}
+                type="button"
+              >
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       <div className="sidebar-footer">
