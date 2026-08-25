@@ -11,6 +11,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 ## Otera Content Lab constraints
 
 - Treat `/Users/qianhuisun/Desktop/Screenshot 2026-08-25 at 11.05.42 AM.png` as the visual reference.
+- Preserve the existing `Context` and `Workflow` views; add `Writing` as a third left-navigation tab for the Otera editorial flow.
+- Treat the four `12.39–12.40 PM` screenshots from 2026-08-25 as structural references for Writing, but exclude the external `Workflow Studio` host toolbar.
+- Keep Writing frontend-only and in-memory. Its Review screen is a rich text editor with no highlighting, annotations, training behavior, backend, or persistence.
 - Prefer Storybook components exported by `../UI-library` and consume them through the `@qianhui/ui` package boundary.
 - Import `@qianhui/ui/styles.css`; use the existing `--qh-*` tokens for visual styling.
 - Compose new product behavior from existing components. Add an app-local component only when the library does not expose the needed semantic component.
