@@ -1,0 +1,3 @@
+# The research snapshots are byte-for-byte source copies. Preserve their
+# original Markdown hard breaks and EOF whitespace so integrity hashes remain stable.
+content/otera/*.md whitespace=-trailing-space,-blank-at-eof
