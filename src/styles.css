@@ -244,6 +244,16 @@ a svg {
   padding: 2.5rem 2.75rem 6rem;
 }
 
+.workflow-view {
+  display: grid;
+  width: 100%;
+  gap: var(--qh-space-6);
+}
+
+.workflow-view .qh-icon-grid-section {
+  max-width: none;
+}
+
 .collection-header,
 .artifact-section,
 .evidence-panel {
@@ -790,6 +800,12 @@ a svg {
     width: 100%;
     padding: 2.25rem var(--qh-space-5) 5rem;
   }
+
+  .workflow-view .qh-icon-grid-section {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--qh-space-6);
+    padding: var(--qh-space-6);
+  }
 }
 
 @media (max-width: 45rem) {
@@ -797,6 +813,10 @@ a svg {
   .artifact-grid,
   .evidence-panel {
     grid-template-columns: 1fr;
+  }
+
+  .workflow-view .qh-icon-grid-section__grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .collection-stat.qh-stat-card {

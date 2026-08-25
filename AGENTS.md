@@ -17,4 +17,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Keep any app-local component in the existing Sana-inspired visual language.
 - Do not edit, rebuild, or clean the dirty `../UI-library` worktree.
 - Do not add approval, review, publishing, versioning, authentication, backend, or persistence flows.
-- Keep all Otera content on one responsive page with search, filtering, anchors, and inline expansion.
+- Keep all Otera content on one responsive page with filtering, anchors, and individual inline expansion.
+- On wide and ultrawide screens, expand and center the main library instead of leaving a large unused right gutter; preserve the established two-column artifact grid.
+- Keep the collection hero free of theme chips, the Evidence summary stat, and full-text search. Keep the top bar free of artifact counts and bulk expand/collapse controls unless the user explicitly asks to restore them.
+- Keep the desktop sidebar at `16rem`. Its primary navigation contains exactly two text-only view tabs, `Context` and `Workflow`; retain the OT identity avatar, local-snapshot status dot, and top-bar Content Lab icon.
+- The Workflow view uses the exact content from `/Users/qianhuisun/Desktop/Screenshot 2026-08-25 at 12.36.50 PM.png` and composes registered `IconGridSection` / `IconTile` styles. Do not recreate its tinted bands or add unregistered workflow-card chrome.
