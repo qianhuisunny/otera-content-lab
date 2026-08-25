@@ -11,6 +11,7 @@ const REQUIRED_FIELDS = ["format", "audiences", "keyword", "targetLength"];
 
 export function BriefStep({ brief, dispatch, onAdvance }) {
   const [errors, setErrors] = useState({});
+  const [confirmation, setConfirmation] = useState("");
   const [isFormatMenuOpen, setIsFormatMenuOpen] = useState(false);
   const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
   const formatRef = useRef(null);
@@ -25,14 +26,17 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
   };
 
   const updateField = (event) => {
+    setConfirmation("");
     dispatch({ type: "set-brief-field", field: event.target.name, value: event.target.value });
   };
 
   const removeAudience = (audience) => {
+    setConfirmation("");
     dispatch({ type: "set-audiences", value: brief.audiences.filter((item) => item !== audience) });
   };
 
   const addAudience = (audience) => {
+    setConfirmation("");
     dispatch({ type: "set-audiences", value: [...brief.audiences, audience] });
     setIsAudienceMenuOpen(false);
   };
@@ -42,10 +46,12 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
     const nextErrors = validateBrief(brief);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length === 0) {
+      setConfirmation("Brief is ready for the next step.");
       onAdvance();
       return;
     }
 
+    setConfirmation("");
     const firstInvalidField = REQUIRED_FIELDS.find((field) => nextErrors[field]);
     requiredControlRefs[firstInvalidField]?.current?.focus();
   };
@@ -76,9 +82,11 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
           <legend>Article format</legend>
           <button
             aria-controls="format-options"
+            aria-describedby="brief-format-error"
             aria-expanded={isFormatMenuOpen}
             aria-invalid={Boolean(errors.format)}
             className="writing-menu-trigger"
+            id="brief-format"
             onClick={() => setIsFormatMenuOpen((isOpen) => !isOpen)}
             ref={requiredControlRefs.format}
             type="button"
@@ -87,16 +95,14 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
             <CaretDown aria-hidden="true" size={16} weight="bold" />
           </button>
           {isFormatMenuOpen ? (
-            <div className="writing-menu-card" id="format-options" role="menu">
+            <div className="writing-menu-card" id="format-options">
               {FORMAT_OPTIONS.map((format) => (
                 <button
-                  aria-checked={brief.format === format}
                   key={format}
                   onClick={() => {
                     dispatch({ type: "set-brief-field", field: "format", value: format });
                     setIsFormatMenuOpen(false);
                   }}
-                  role="menuitemradio"
                   type="button"
                 >
                   {format}
@@ -104,11 +110,13 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
               ))}
             </div>
           ) : null}
-          {errors.format ? <p className="writing-error" role="alert">{errors.format}</p> : null}
+          <p aria-live="polite" className="writing-error" id="brief-format-error">
+            {errors.format}
+          </p>
         </fieldset>
 
         <fieldset className="writing-field">
-          <legend dangerouslySetInnerHTML={{ __html: "Who it's for" }} />
+          <legend>Who it's for</legend>
           <div className="writing-audiences">
             {brief.audiences.map((audience) => (
               <span className="writing-audience-chip" key={audience}>
@@ -121,9 +129,11 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
           </div>
           <button
             aria-controls="audience-suggestions"
+            aria-describedby="brief-audiences-error"
             aria-expanded={isAudienceMenuOpen}
             aria-invalid={Boolean(errors.audiences)}
             className="writing-menu-trigger writing-menu-trigger--inline"
+            id="brief-audiences"
             onClick={() => setIsAudienceMenuOpen((isOpen) => !isOpen)}
             ref={requiredControlRefs.audiences}
             type="button"
@@ -143,21 +153,26 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
               )}
             </div>
           ) : null}
-          {errors.audiences ? <p className="writing-error" role="alert">{errors.audiences}</p> : null}
+          <p aria-live="polite" className="writing-error" id="brief-audiences-error">
+            {errors.audiences}
+          </p>
         </fieldset>
 
         <div className="writing-field">
-          <label htmlFor="keyword">Primary keyword</label>
+          <label htmlFor="brief-keyword">Primary keyword</label>
           <input
+            aria-describedby="brief-keyword-error"
             aria-invalid={Boolean(errors.keyword)}
-            id="keyword"
+            id="brief-keyword"
             name="keyword"
             onChange={updateField}
             ref={requiredControlRefs.keyword}
             type="text"
             value={brief.keyword}
           />
-          {errors.keyword ? <p className="writing-error" role="alert">{errors.keyword}</p> : null}
+          <p aria-live="polite" className="writing-error" id="brief-keyword-error">
+            {errors.keyword}
+          </p>
         </div>
 
         <div className="writing-field">
@@ -171,25 +186,28 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
         </div>
 
         <div className="writing-field">
-          <label htmlFor="targetLength">Target length</label>
+          <label htmlFor="brief-target-length">Target length</label>
           <input
+            aria-describedby="brief-target-length-error"
             aria-invalid={Boolean(errors.targetLength)}
-            id="targetLength"
+            id="brief-target-length"
             name="targetLength"
             onChange={updateField}
             ref={requiredControlRefs.targetLength}
             type="text"
             value={brief.targetLength}
           />
-          {errors.targetLength ? <p className="writing-error" role="alert">{errors.targetLength}</p> : null}
+          <p aria-live="polite" className="writing-error" id="brief-target-length-error">
+            {errors.targetLength}
+          </p>
         </div>
 
         <div className="writing-actions">
-          <Button onClick={() => dispatch({ type: "reset-outline" })} type="button" variant="secondary">
-            Regenerate outline
-          </Button>
           <Button type="submit">Plan outline</Button>
         </div>
+        <p aria-live="polite" className="writing-confirmation" id="brief-ready">
+          {confirmation}
+        </p>
       </form>
     </section>
   );

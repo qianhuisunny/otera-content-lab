@@ -123,8 +123,7 @@
   text-align: left;
 }
 
-.writing-menu-card button:hover,
-.writing-menu-card button[aria-checked="true"] {
+.writing-menu-card button:hover {
   background: var(--qh-color-control-muted);
 }
 
@@ -160,40 +159,25 @@
   text-decoration: underline;
 }
 
-.writing-field__helper {
-  margin: 0;
-  color: var(--qh-color-text-muted);
-  font-size: var(--qh-text-small);
-  line-height: 1.5;
-}
-
 .writing-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--qh-space-3);
   border-top: 1px solid var(--qh-color-border);
   padding-top: var(--qh-space-5);
 }
 
-.writing-outline-editor {
-  min-height: 48rem;
-  border: 0;
-  border-radius: var(--qh-radius-inline);
-  background: var(--qh-color-surface-muted);
-  font-family: var(--qh-font-mono);
-  font-size: var(--qh-text-body);
-  line-height: 1.9;
-}
-
-.writing-outline-editor:focus-visible {
-  outline: 3px solid var(--qh-color-focus);
-  outline-offset: 2px;
-}
-
 .writing-error {
   margin: 0;
   color: var(--qh-color-diff-removed-text);
+  font-size: var(--qh-text-small);
+  font-weight: 600;
+}
+
+.writing-confirmation {
+  margin: 0;
+  color: var(--qh-color-diff-added-text);
   font-size: var(--qh-text-small);
   font-weight: 600;
 }

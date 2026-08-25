@@ -108,28 +108,38 @@ test("brief screen renders the approved controlled fields", async (t) => {
         onAdvance: () => {},
       }),
     );
+    const readableMarkup = markup.replaceAll("&#x27;", "'");
     for (const label of ["Linked opportunity", "Article format", "Who it's for", "Primary keyword", "What the searcher wants", "Additional directions", "Target length"]) {
-      assert.ok(markup.includes(label), `${label} must be rendered`);
+      assert.ok(readableMarkup.includes(label), `${label} must be rendered`);
     }
     assert.match(markup, /Plan outline/);
-    assert.match(markup, /Regenerate outline/);
+    assert.doesNotMatch(markup, /Regenerate outline/);
+    assert.match(markup, /id="brief-ready"/);
   });
 });
 
-test("outline screen renders editable Otera structure and actions", async (t) => {
+test("brief controls retain accessible validation and disclosure semantics", async (t) => {
   await withVite(t, async (vite) => {
-    const { OutlineStep } = await vite.ssrLoadModule("/src/components/writing/OutlineStep.jsx");
-    const markup = renderToStaticMarkup(
-      React.createElement(OutlineStep, {
-        outline: WRITING_SCENARIO.outline,
+    const { BriefStep } = await vite.ssrLoadModule("/src/components/writing/BriefStep.jsx");
+    const session = createWritingSession();
+    const briefMarkup = renderToStaticMarkup(
+      React.createElement(BriefStep, {
+        brief: session.brief,
         dispatch: () => {},
         onAdvance: () => {},
-        onBack: () => {},
       }),
     );
-    assert.match(markup, /Plan outline/);
-    assert.match(markup, /What agentic claims automation changes/);
-    assert.match(markup, /Draft first version/);
-    assert.match(markup, /h2:/);
+    for (const [controlId, errorId] of [
+      ["brief-format", "brief-format-error"],
+      ["brief-audiences", "brief-audiences-error"],
+      ["brief-keyword", "brief-keyword-error"],
+      ["brief-target-length", "brief-target-length-error"],
+    ]) {
+      const control = briefMarkup.match(new RegExp(`<[^>]+id="${controlId}"[^>]*>`))?.[0] ?? "";
+      assert.ok(control.includes(`aria-describedby="${errorId}"`), `${controlId} must describe its error`);
+      assert.match(briefMarkup, new RegExp(`id="${errorId}"`));
+    }
+
+    assert.doesNotMatch(briefMarkup, /role="menu"|role="menuitemradio"|aria-checked=/);
   });
 });

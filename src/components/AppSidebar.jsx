@@ -3,6 +3,7 @@ import { useRef } from "react";
 const viewItems = [
   { id: "context", label: "Context" },
   { id: "workflow", label: "Workflow" },
+  { id: "writing", label: "Writing" },
 ];
 
 export function AppSidebar({ activeView, onViewChange, researchCutoff }) {

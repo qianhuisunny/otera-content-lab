@@ -107,7 +107,7 @@ test("the collection chrome keeps the user-requested clutter out of the initial 
   assert.doesNotMatch(pageMarkup, /Collapse all/);
 });
 
-test("the sidebar exposes only Context and Workflow as accessible view tabs", async (t) => {
+test("the sidebar exposes Context, Workflow, and Writing as accessible view tabs", async (t) => {
   const vite = await createServer({
     appType: "custom",
     logLevel: "silent",
@@ -127,15 +127,16 @@ test("the sidebar exposes only Context and Workflow as accessible view tabs", as
   const navigationMarkup = sidebarMarkup.match(/<nav[\s\S]*?<\/nav>/)?.[0] ?? "";
 
   assert.match(navigationMarkup, /role="tablist"/);
-  assert.equal((navigationMarkup.match(/role="tab"/g) ?? []).length, 2);
+  assert.equal((navigationMarkup.match(/role="tab"/g) ?? []).length, 3);
   assert.ok(navigationMarkup.indexOf("Context") < navigationMarkup.indexOf("Workflow"));
+  assert.ok(navigationMarkup.indexOf("Workflow") < navigationMarkup.indexOf("Writing"));
   assert.match(navigationMarkup, /aria-selected="true"/);
   assert.doesNotMatch(navigationMarkup, /<a /);
   assert.doesNotMatch(navigationMarkup, /Company|ICP &amp; market fit|Personas|Evidence notes/);
   assert.doesNotMatch(navigationMarkup, /<svg/);
 });
 
-test("the app defaults to Context while exposing the Workflow tab", async (t) => {
+test("the app defaults to Context while exposing Workflow and Writing tabs", async (t) => {
   const vite = await createServer({
     appType: "custom",
     logLevel: "silent",
@@ -150,7 +151,28 @@ test("the app defaults to Context while exposing the Workflow tab", async (t) =>
   assert.match(pageMarkup, /role="tabpanel"/);
   assert.match(pageMarkup, /Otera context artifacts/);
   assert.match(pageMarkup, />Workflow</);
+  assert.match(pageMarkup, />Writing</);
   assert.doesNotMatch(pageMarkup, /Video Storyboarding Briefing/);
+});
+
+test("the Writing tab renders only the approved Otera briefing form", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const markup = renderToStaticMarkup(React.createElement(App, { initialView: "writing" }));
+  const readableMarkup = markup.replaceAll("&#x27;", "'");
+
+  for (const label of ["Linked opportunity", "Article format", "Who it's for", "Primary keyword", "What the searcher wants", "Additional directions", "Target length"]) {
+    assert.ok(readableMarkup.includes(label), `${label} must be rendered in Writing`);
+  }
+  assert.match(markup, /Plan outline/);
+  assert.doesNotMatch(markup, /Article outline|Back to brief|Draft first version|What agentic claims automation changes/);
 });
 
 test("the workflow view uses registered sections and exact screenshot content", async (t) => {

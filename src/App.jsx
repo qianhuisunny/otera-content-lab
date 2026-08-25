@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useReducer, useState } from "react";
 import { Stack, Target } from "@phosphor-icons/react";
 import { Button } from "@qianhui/ui";
 import { AppSidebar } from "./components/AppSidebar";
@@ -6,8 +6,10 @@ import { ArtifactGrid } from "./components/ArtifactGrid";
 import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
+import { BriefStep } from "./components/writing/BriefStep";
 import { filterArtifacts } from "./data/artifactUtils";
 import { COLLECTION_STATS, OTERA_ARTIFACTS } from "./data/oteraArtifacts";
+import { createWritingSession, writingReducer } from "./data/writingSession";
 
 const sectionDefinitions = [
   {
@@ -33,10 +35,15 @@ const sectionDefinitions = [
   },
 ];
 
-export function App() {
-  const [activeView, setActiveView] = useState("context");
+export function App({ initialView = "context" }) {
+  const [activeView, setActiveView] = useState(initialView);
   const [filter, setFilter] = useState("all");
   const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const [writingSession, dispatchWriting] = useReducer(
+    writingReducer,
+    undefined,
+    createWritingSession,
+  );
 
   const visibleArtifacts = useMemo(
     () => filterArtifacts(OTERA_ARTIFACTS, "", filter),
@@ -87,6 +94,12 @@ export function App() {
         >
           {activeView === "workflow" ? (
             <WorkflowView />
+          ) : activeView === "writing" ? (
+            <BriefStep
+              brief={writingSession.brief}
+              dispatch={dispatchWriting}
+              onAdvance={() => {}}
+            />
           ) : (
             <>
               <CollectionHeader
