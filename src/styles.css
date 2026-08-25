@@ -254,6 +254,11 @@ a svg {
   max-width: none;
 }
 
+.workflow-view .qh-icon-tile > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .collection-header,
 .artifact-section,
 .evidence-panel {
@@ -759,6 +764,17 @@ a svg {
   margin: var(--qh-space-1) 0 0;
   color: var(--qh-color-text-muted);
   font-size: var(--qh-text-caption);
+}
+
+@media (max-width: 80rem) {
+  .workflow-view .qh-icon-grid-section {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--qh-space-6);
+  }
+
+  .workflow-view .qh-icon-grid-section__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 56rem) {
