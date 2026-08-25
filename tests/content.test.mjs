@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createServer } from "vite";
 
 import { ARTIFACT_DEFINITIONS } from "../src/data/artifactDefinitions.js";
 import {
@@ -71,4 +74,107 @@ test("Markdown links keep sources external and route known local dossiers on-pag
   );
   assert.equal(resolveArtifactHref("../Otera ICP context.md"), "#artifact-icp-context");
   assert.equal(resolveArtifactHref("unknown-local-note.md"), "#evidence");
+});
+
+test("the collection chrome keeps the user-requested clutter out of the initial page", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const { CollectionHeader } = await vite.ssrLoadModule(
+    "/src/components/CollectionHeader.jsx",
+  );
+  const headerMarkup = renderToStaticMarkup(
+    React.createElement(CollectionHeader, {
+      filter: "all",
+      onFilterChange: () => {},
+      stats: { artifacts: 10, lines: 3164, personas: 7, researchCutoff: "2026-08-23" },
+      visibleCount: 10,
+    }),
+  );
+  const pageMarkup = renderToStaticMarkup(React.createElement(App));
+
+  assert.doesNotMatch(headerMarkup, /Agentic operations/);
+  assert.doesNotMatch(headerMarkup, /type="search"/);
+  assert.doesNotMatch(headerMarkup, />Public</);
+  assert.doesNotMatch(pageMarkup, /10 local artifacts/);
+  assert.doesNotMatch(pageMarkup, /Expand all/);
+  assert.doesNotMatch(pageMarkup, /Collapse all/);
+});
+
+test("the sidebar navigation is text-only and starts with Context", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const { AppSidebar } = await vite.ssrLoadModule("/src/components/AppSidebar.jsx");
+  const sidebarMarkup = renderToStaticMarkup(
+    React.createElement(AppSidebar, { researchCutoff: "2026-08-23" }),
+  );
+  const navigationMarkup = sidebarMarkup.match(/<nav[\s\S]*?<\/nav>/)?.[0] ?? "";
+
+  assert.match(navigationMarkup, /href="#overview"><span>Context<\/span>/);
+  assert.doesNotMatch(navigationMarkup, /Overview/);
+  assert.doesNotMatch(navigationMarkup, /<svg/);
+});
+
+test("the workflow view uses registered sections and exact screenshot content", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const source = await readFile(
+    new URL("../src/components/WorkflowView.jsx", import.meta.url),
+    "utf8",
+  );
+  const { WorkflowView } = await vite.ssrLoadModule("/src/components/WorkflowView.jsx");
+  const markup = renderToStaticMarkup(React.createElement(WorkflowView));
+
+  assert.match(source, /import \{ IconGridSection \} from "@qianhui\/ui";/);
+  assert.equal((markup.match(/<section/g) ?? []).length, 3);
+  assert.equal((markup.match(/class="qh-icon-tile"/g) ?? []).length, 7);
+
+  for (const heading of ["BRIEF", "WRITE", "PUBLISH"]) {
+    assert.match(markup, new RegExp(`aria-label="${heading}"`));
+  }
+
+  for (const title of [
+    "Video Storyboarding Briefing",
+    "Blog Article Briefing",
+    "Learning Solution Plan",
+    "Video Storyboard",
+    "Long-Form Blog Article",
+    "E-Learning Storyboard",
+    "Illustration Creation",
+  ]) {
+    assert.ok(markup.includes(title), `${title} must be rendered`);
+  }
+
+  for (const description of [
+    "Define the objective, audience, and creative direction.",
+    "Define goals, audience, key messages, and visual style for your video storyboard.",
+    "Define topic, angle, audience, keywords, and success metrics for your blog article.",
+    "Define learning objectives, audience, content structure, and success metrics.",
+    "Turn briefs into structured content and narratives.",
+    "Transform your brief into a visual storyboard with scene-by-scene breakdown.",
+    "Craft comprehensive, SEO-optimized long-form blog articles.",
+    "Design e-learning flows and storyboards for engaging learning experiences.",
+    "Finalize and publish content across channels.",
+    "Create custom illustrations and social graphics for LinkedIn, Xiaohongshu, and other platforms.",
+  ]) {
+    assert.ok(markup.includes(description), `${description} must be rendered`);
+  }
 });
