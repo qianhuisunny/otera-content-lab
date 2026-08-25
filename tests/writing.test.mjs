@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createServer } from "vite";
 
 import {
   WRITING_SCENARIO,
@@ -14,6 +17,17 @@ import {
   validateBrief,
   writingReducer,
 } from "../src/data/writingSession.js";
+
+async function withVite(t, callback) {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+  return callback(vite);
+}
 
 test("the Otera writing fixture defines the approved four-step scenario", () => {
   assert.deepEqual(WRITING_STEP_ORDER, ["brief", "outline", "draft", "review"]);
@@ -81,4 +95,41 @@ test("research export contains title, evidence posture, and source date", () => 
   assert.match(markdown, /^# Governed claims automation research/m);
   assert.match(markdown, /Research cutoff: 2026-08-23/);
   assert.match(markdown, /Company-reported outcomes require attribution/);
+});
+
+test("brief screen renders the approved controlled fields", async (t) => {
+  await withVite(t, async (vite) => {
+    const { BriefStep } = await vite.ssrLoadModule("/src/components/writing/BriefStep.jsx");
+    const session = createWritingSession();
+    const markup = renderToStaticMarkup(
+      React.createElement(BriefStep, {
+        brief: session.brief,
+        dispatch: () => {},
+        onAdvance: () => {},
+      }),
+    );
+    for (const label of ["Linked opportunity", "Article format", "Who it's for", "Primary keyword", "What the searcher wants", "Additional directions", "Target length"]) {
+      assert.ok(markup.includes(label), `${label} must be rendered`);
+    }
+    assert.match(markup, /Plan outline/);
+    assert.match(markup, /Regenerate outline/);
+  });
+});
+
+test("outline screen renders editable Otera structure and actions", async (t) => {
+  await withVite(t, async (vite) => {
+    const { OutlineStep } = await vite.ssrLoadModule("/src/components/writing/OutlineStep.jsx");
+    const markup = renderToStaticMarkup(
+      React.createElement(OutlineStep, {
+        outline: WRITING_SCENARIO.outline,
+        dispatch: () => {},
+        onAdvance: () => {},
+        onBack: () => {},
+      }),
+    );
+    assert.match(markup, /Plan outline/);
+    assert.match(markup, /What agentic claims automation changes/);
+    assert.match(markup, /Draft first version/);
+    assert.match(markup, /h2:/);
+  });
 });

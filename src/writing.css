@@ -1,0 +1,214 @@
+.writing-page {
+  width: 100%;
+  max-width: 62rem;
+  margin-inline: auto;
+  padding: 3rem 2.75rem 6rem;
+}
+
+.writing-page-header {
+  margin-bottom: var(--qh-space-7);
+}
+
+.writing-page-header__meta {
+  margin-bottom: var(--qh-space-2);
+  color: var(--qh-color-text-muted);
+  font-size: var(--qh-text-caption);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.writing-page-header h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.writing-page-header p {
+  max-width: 44rem;
+  margin: var(--qh-space-3) 0 0;
+  color: var(--qh-color-text-muted);
+  font-size: var(--qh-text-body);
+  line-height: 1.6;
+}
+
+.writing-form {
+  display: grid;
+  gap: var(--qh-space-6);
+}
+
+.writing-field {
+  display: grid;
+  gap: var(--qh-space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.writing-field > label,
+.writing-field > legend {
+  font-size: var(--qh-text-small);
+  font-weight: 650;
+}
+
+.writing-field input,
+.writing-field textarea,
+.writing-menu-trigger {
+  width: 100%;
+  border: 1px solid var(--qh-color-border);
+  border-radius: var(--qh-radius-inline);
+  background: var(--qh-color-surface);
+  color: var(--qh-color-text);
+  padding: var(--qh-space-3) var(--qh-space-4);
+}
+
+.writing-field input,
+.writing-field textarea {
+  min-width: 0;
+  font-size: var(--qh-text-body);
+  line-height: 1.55;
+}
+
+.writing-field textarea {
+  resize: vertical;
+}
+
+.writing-field input:focus-visible,
+.writing-field textarea:focus-visible,
+.writing-menu-trigger:focus-visible,
+.writing-menu-card button:focus-visible,
+.writing-audience-chip button:focus-visible {
+  outline: 3px solid var(--qh-color-focus);
+  outline-offset: 2px;
+}
+
+.writing-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3.25rem;
+  cursor: pointer;
+  font-size: var(--qh-text-body);
+  text-align: left;
+}
+
+.writing-menu-trigger svg {
+  color: var(--qh-color-text-muted);
+}
+
+.writing-menu-trigger--inline {
+  width: fit-content;
+  min-height: 2.5rem;
+  padding: var(--qh-space-2) var(--qh-space-3);
+  font-size: var(--qh-text-small);
+}
+
+.writing-menu-card {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--qh-color-border);
+  border-radius: var(--qh-radius-tile);
+  background: var(--qh-color-surface);
+}
+
+.writing-menu-card button {
+  border: 0;
+  background: transparent;
+  padding: var(--qh-space-3) var(--qh-space-4);
+  color: var(--qh-color-text);
+  cursor: pointer;
+  font-size: var(--qh-text-small);
+  text-align: left;
+}
+
+.writing-menu-card button:hover,
+.writing-menu-card button[aria-checked="true"] {
+  background: var(--qh-color-control-muted);
+}
+
+.writing-menu-card p {
+  margin: 0;
+  padding: var(--qh-space-3) var(--qh-space-4);
+  color: var(--qh-color-text-muted);
+  font-size: var(--qh-text-small);
+}
+
+.writing-audiences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qh-space-2);
+}
+
+.writing-audience-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--qh-space-2);
+  border-radius: var(--qh-radius-pill);
+  background: var(--qh-color-control-muted);
+  padding: var(--qh-space-2) var(--qh-space-3);
+  font-size: var(--qh-text-small);
+}
+
+.writing-audience-chip button {
+  border: 0;
+  background: transparent;
+  color: var(--qh-color-text-muted);
+  cursor: pointer;
+  font-size: var(--qh-text-caption);
+  text-decoration: underline;
+}
+
+.writing-field__helper {
+  margin: 0;
+  color: var(--qh-color-text-muted);
+  font-size: var(--qh-text-small);
+  line-height: 1.5;
+}
+
+.writing-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--qh-space-3);
+  border-top: 1px solid var(--qh-color-border);
+  padding-top: var(--qh-space-5);
+}
+
+.writing-outline-editor {
+  min-height: 48rem;
+  border: 0;
+  border-radius: var(--qh-radius-inline);
+  background: var(--qh-color-surface-muted);
+  font-family: var(--qh-font-mono);
+  font-size: var(--qh-text-body);
+  line-height: 1.9;
+}
+
+.writing-outline-editor:focus-visible {
+  outline: 3px solid var(--qh-color-focus);
+  outline-offset: 2px;
+}
+
+.writing-error {
+  margin: 0;
+  color: var(--qh-color-diff-removed-text);
+  font-size: var(--qh-text-small);
+  font-weight: 600;
+}
+
+@media (max-width: 45rem) {
+  .writing-page {
+    padding: var(--qh-space-6) var(--qh-space-4) var(--qh-space-7);
+  }
+
+  .writing-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .writing-actions .qh-button {
+    width: 100%;
+  }
+}
