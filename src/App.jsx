@@ -78,50 +78,50 @@ export function App() {
           researchCutoff={COLLECTION_STATS.researchCutoff}
         />
 
-        <main
-          aria-labelledby={`${activeView}-tab`}
-          className="content-library"
-          id="content-library"
-          role="tabpanel"
-          tabIndex={-1}
-        >
-          {activeView === "workflow" ? (
-            <WorkflowView />
-          ) : (
-            <>
-              <CollectionHeader
-                filter={filter}
-                onFilterChange={setFilter}
-                stats={COLLECTION_STATS}
-                visibleCount={visibleArtifacts.length}
-              />
-              {visibleArtifacts.length ? (
-                <div className="artifact-sections">
-                  {sectionDefinitions.map((section) => (
-                    <ArtifactGrid
-                      {...section}
-                      artifacts={visibleArtifacts.filter((artifact) =>
-                        section.artifactIds.includes(artifact.id),
-                      )}
-                      expandedIds={expandedIds}
-                      key={section.id}
-                      onToggle={toggleArtifact}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <section className="empty-state" aria-live="polite">
-                  <Target size={28} weight="regular" aria-hidden="true" />
-                  <h2>No matching context</h2>
-                  <p>Try a broader role, workflow, evidence type, or artifact category.</p>
-                  <Button variant="secondary" size="sm" type="button" onClick={resetFilters}>
-                    Reset filters
-                  </Button>
-                </section>
-              )}
-              <EvidencePanel researchCutoff={COLLECTION_STATS.researchCutoff} />
-            </>
-          )}
+        <main className="content-library" id="content-library" tabIndex={-1}>
+          <div
+            aria-labelledby={`${activeView}-tab`}
+            id="content-view-panel"
+            role="tabpanel"
+          >
+            {activeView === "workflow" ? (
+              <WorkflowView />
+            ) : (
+              <>
+                <CollectionHeader
+                  filter={filter}
+                  onFilterChange={setFilter}
+                  stats={COLLECTION_STATS}
+                  visibleCount={visibleArtifacts.length}
+                />
+                {visibleArtifacts.length ? (
+                  <div className="artifact-sections">
+                    {sectionDefinitions.map((section) => (
+                      <ArtifactGrid
+                        {...section}
+                        artifacts={visibleArtifacts.filter((artifact) =>
+                          section.artifactIds.includes(artifact.id),
+                        )}
+                        expandedIds={expandedIds}
+                        key={section.id}
+                        onToggle={toggleArtifact}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <section className="empty-state" aria-live="polite">
+                    <Target size={28} weight="regular" aria-hidden="true" />
+                    <h2>No matching context</h2>
+                    <p>Try a broader role, workflow, evidence type, or artifact category.</p>
+                    <Button variant="secondary" size="sm" type="button" onClick={resetFilters}>
+                      Reset filters
+                    </Button>
+                  </section>
+                )}
+                <EvidencePanel researchCutoff={COLLECTION_STATS.researchCutoff} />
+              </>
+            )}
+          </div>
         </main>
       </div>
     </div>

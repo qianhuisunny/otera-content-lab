@@ -116,7 +116,9 @@ test("the sidebar exposes only Context and Workflow as accessible view tabs", as
   });
   t.after(() => vite.close());
 
-  const { AppSidebar } = await vite.ssrLoadModule("/src/components/AppSidebar.jsx");
+  const { AppSidebar, getNextViewIndex } = await vite.ssrLoadModule(
+    "/src/components/AppSidebar.jsx",
+  );
   const sidebarMarkup = renderToStaticMarkup(
     React.createElement(AppSidebar, {
       activeView: "context",
@@ -128,11 +130,31 @@ test("the sidebar exposes only Context and Workflow as accessible view tabs", as
 
   assert.match(navigationMarkup, /role="tablist"/);
   assert.equal((navigationMarkup.match(/role="tab"/g) ?? []).length, 2);
+  assert.equal((navigationMarkup.match(/aria-selected="true"/g) ?? []).length, 1);
+  assert.equal((navigationMarkup.match(/tabindex="0"/g) ?? []).length, 1);
+  assert.equal(
+    (navigationMarkup.match(/aria-controls="content-view-panel"/g) ?? []).length,
+    2,
+  );
   assert.ok(navigationMarkup.indexOf("Context") < navigationMarkup.indexOf("Workflow"));
-  assert.match(navigationMarkup, /aria-selected="true"/);
   assert.doesNotMatch(navigationMarkup, /<a /);
   assert.doesNotMatch(navigationMarkup, /Company|ICP &amp; market fit|Personas|Evidence notes/);
   assert.doesNotMatch(navigationMarkup, /<svg/);
+
+  assert.equal(getNextViewIndex("ArrowLeft", 0), 1);
+  assert.equal(getNextViewIndex("ArrowLeft", 1), 0);
+  assert.equal(getNextViewIndex("ArrowUp", 0), 1);
+  assert.equal(getNextViewIndex("ArrowUp", 1), 0);
+  assert.equal(getNextViewIndex("ArrowRight", 0), 1);
+  assert.equal(getNextViewIndex("ArrowRight", 1), 0);
+  assert.equal(getNextViewIndex("ArrowDown", 0), 1);
+  assert.equal(getNextViewIndex("ArrowDown", 1), 0);
+  assert.equal(getNextViewIndex("Home", 0), 0);
+  assert.equal(getNextViewIndex("Home", 1), 0);
+  assert.equal(getNextViewIndex("End", 0), 1);
+  assert.equal(getNextViewIndex("End", 1), 1);
+  assert.equal(getNextViewIndex("Escape", 0), null);
+  assert.equal(getNextViewIndex("Escape", 1), null);
 });
 
 test("the app defaults to Context while exposing the Workflow tab", async (t) => {
@@ -146,8 +168,17 @@ test("the app defaults to Context while exposing the Workflow tab", async (t) =>
 
   const { App } = await vite.ssrLoadModule("/src/App.jsx");
   const pageMarkup = renderToStaticMarkup(React.createElement(App));
+  const mainMarkup = pageMarkup.match(/<main\b[^>]*id="content-library"[^>]*>/)?.[0] ?? "";
+  const viewPanelMarkup =
+    pageMarkup.match(/<div\b[^>]*id="content-view-panel"[^>]*>/)?.[0] ?? "";
 
-  assert.match(pageMarkup, /role="tabpanel"/);
+  assert.doesNotMatch(mainMarkup, /\srole=/);
+  assert.match(viewPanelMarkup, /role="tabpanel"/);
+  assert.match(viewPanelMarkup, /aria-labelledby="context-tab"/);
+  assert.equal(
+    (pageMarkup.match(/aria-controls="content-view-panel"/g) ?? []).length,
+    2,
+  );
   assert.match(pageMarkup, /Otera context artifacts/);
   assert.match(pageMarkup, />Workflow</);
   assert.doesNotMatch(pageMarkup, /Video Storyboarding Briefing/);
@@ -187,6 +218,25 @@ test("the workflow view uses registered sections and exact screenshot content", 
     "Illustration Creation",
   ]) {
     assert.ok(markup.includes(title), `${title} must be rendered`);
+  }
+
+  const expectedRenderedOrder = [
+    'aria-label="BRIEF"',
+    'class="qh-icon-tile__name">Video Storyboarding Briefing<',
+    'class="qh-icon-tile__name">Blog Article Briefing<',
+    'class="qh-icon-tile__name">Learning Solution Plan<',
+    'aria-label="WRITE"',
+    'class="qh-icon-tile__name">Video Storyboard<',
+    'class="qh-icon-tile__name">Long-Form Blog Article<',
+    'class="qh-icon-tile__name">E-Learning Storyboard<',
+    'aria-label="PUBLISH"',
+    'class="qh-icon-tile__name">Illustration Creation<',
+  ];
+  let previousPosition = -1;
+  for (const renderedItem of expectedRenderedOrder) {
+    const position = markup.indexOf(renderedItem);
+    assert.ok(position > previousPosition, `${renderedItem} must follow the previous workflow item`);
+    previousPosition = position;
   }
 
   for (const description of [

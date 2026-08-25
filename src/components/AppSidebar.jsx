@@ -5,21 +5,26 @@ const viewItems = [
   { id: "workflow", label: "Workflow" },
 ];
 
+export function getNextViewIndex(key, index) {
+  if (key === "ArrowLeft" || key === "ArrowUp") {
+    return (index - 1 + viewItems.length) % viewItems.length;
+  }
+
+  if (key === "ArrowRight" || key === "ArrowDown") {
+    return (index + 1) % viewItems.length;
+  }
+
+  if (key === "Home") return 0;
+  if (key === "End") return viewItems.length - 1;
+
+  return null;
+}
+
 export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
   const tabRefs = useRef([]);
 
   const handleTabKeyDown = (event, index) => {
-    let nextIndex = null;
-
-    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      nextIndex = (index - 1 + viewItems.length) % viewItems.length;
-    } else if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-      nextIndex = (index + 1) % viewItems.length;
-    } else if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = viewItems.length - 1;
-    }
+    const nextIndex = getNextViewIndex(event.key, index);
 
     if (nextIndex === null) return;
     event.preventDefault();
@@ -45,7 +50,7 @@ export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
             const selected = activeView === item.id;
             return (
               <button
-                aria-controls="content-library"
+                aria-controls="content-view-panel"
                 aria-selected={selected}
                 id={`${item.id}-tab`}
                 key={item.id}

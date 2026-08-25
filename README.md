@@ -15,7 +15,7 @@ A single-page, writing-ready library for Otera company research, ICP context, th
 - Operational User
 - Transformation Partner
 
-All ten Markdown files are stored as exact local snapshots in `content/otera/` and rendered inline. Search indexes titles, metadata, facets, and the complete Markdown body.
+All ten Markdown files are stored as exact local snapshots in `content/otera/` and rendered inline. Category filters, in-page anchors, and individual inline expansion keep the full research navigable without adding extra workflow.
 
 ## UI composition
 
