@@ -8,12 +8,13 @@ The result is a frontend-only, interactive prototype. It demonstrates the comple
 
 ## Approved product direction
 
-The existing application shell gains two top-level destinations in the left navigation:
+The existing application shell gains a third top-level destination in the left navigation:
 
-- `Context` opens the current Context Library and preserves its existing anchors, filters, artifact cards, and inline expansion.
+- `Context` opens the current Context Library and preserves its filters, artifact cards, and inline expansion.
+- `Workflow` preserves the existing registered-workflow catalog.
 - `Writing` opens a focused editorial workspace. In this mode, the sidebar shows the three workflow phases and their nested steps.
 
-The application uses local React state rather than adding a routing dependency. Switching between Context and Writing does not discard the current writing session. Refreshing the page resets the writing prototype to its supplied fixture data.
+The application uses local React state rather than adding a routing dependency. Switching among Context, Workflow, and Writing does not discard the current writing session. Refreshing the page resets the writing prototype to its supplied fixture data.
 
 ## Visual sources and interpretation
 
@@ -45,12 +46,12 @@ The scenario is synthesized from the existing Otera company context, ICP context
 
 ## Application architecture
 
-`App` becomes a thin workspace coordinator. It owns the top-level `activeWorkspace` state and renders either the existing Context Library composition or the new `WritingWorkspace`.
+`App` remains the thin workspace coordinator. It owns the top-level `activeView` state and renders the existing Context Library composition, the existing `WorkflowView`, or the new `WritingWorkspace`.
 
-`AppSidebar` receives the active workspace and workspace-change callback. Its Otera identity and existing footer remain stable. The body changes by workspace:
+`AppSidebar` receives the active view, view-change callback, and Writing step state. Its Otera identity, accessible tab behavior, and existing footer remain stable. The primary tab list contains `Context`, `Workflow`, and `Writing`. The body below the tabs changes by view:
 
-- Context mode shows the existing five text-only in-page anchors.
-- Writing mode shows `01 BRIEF IT`, `02 WRITE IT`, and `03 SHIP IT` with nested steps, active bullets, completed checks, descriptions, and available-step navigation.
+- Context and Workflow modes keep the current compact sidebar.
+- Writing mode additionally shows `01 BRIEF IT`, `02 WRITE IT`, and `03 SHIP IT` with nested steps, active bullets, completed checks, descriptions, and available-step navigation.
 
 `WritingWorkspace` owns the writing session and the current step. It composes a writing-specific top bar, workflow sidebar state, and one of four focused screen components. Business data is passed down as props; visual components do not import Otera source files directly.
 
@@ -215,7 +216,8 @@ Expected local cases are handled explicitly:
 Automated checks cover:
 
 - Existing Context Library content and navigation remain present.
-- `Context` and `Writing` workspace controls render and switch correctly.
+- The existing Workflow catalog remains present and unchanged.
+- `Context`, `Workflow`, and `Writing` workspace controls render and switch correctly.
 - The Writing sidebar contains the approved phases and four implemented steps.
 - Required brief validation and step transitions work.
 - Outline edits flow into the session state.
@@ -239,7 +241,7 @@ Visual QA compares each implemented state with its corresponding reference at a 
 - Additional focused tests if state helpers are extracted
 - `design-qa.md`
 
-The Otera Markdown snapshots, Sites worker, hosting manifest, build preparation script, sibling UI library, and vendor package remain untouched.
+`src/components/WorkflowView.jsx`, the Otera Markdown snapshots, Sites worker, hosting manifest, build preparation script, sibling UI library, and vendor package remain untouched.
 
 ## Non-goals
 
