@@ -528,6 +528,10 @@ button.writing-section-bar {
   background: var(--qh-color-surface);
 }
 
+.rich-editor {
+  position: relative;
+}
+
 .editor-toolbar {
   position: sticky;
   top: 3.5rem;
@@ -569,9 +573,64 @@ button.writing-section-bar {
 
 .editor-tool:focus-visible,
 .editor-style-select select:focus-visible,
-.editor-surface:focus-visible {
+.editor-surface:focus-visible,
+.editor-link-composer input:focus-visible,
+.editor-link-action:focus-visible {
   outline: 3px solid var(--qh-color-focus);
   outline-offset: 2px;
+}
+
+.editor-link-composer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--qh-space-2);
+  border-bottom: 1px solid var(--qh-color-border);
+  background: var(--qh-color-surface-muted);
+  padding: var(--qh-space-3);
+}
+
+.editor-link-composer label,
+.editor-link-composer__error {
+  font-size: var(--qh-text-small);
+}
+
+.editor-link-composer input {
+  min-width: 0;
+  min-height: 2.5rem;
+  border: 1px solid var(--qh-color-border);
+  border-radius: var(--qh-radius-inline);
+  background: var(--qh-color-surface);
+  color: var(--qh-color-text);
+  padding: 0 var(--qh-space-3);
+}
+
+.editor-link-composer__actions {
+  display: flex;
+  gap: var(--qh-space-2);
+}
+
+.editor-link-action {
+  min-height: 2.5rem;
+  border: 1px solid var(--qh-color-border);
+  border-radius: var(--qh-radius-inline);
+  background: var(--qh-color-surface);
+  color: var(--qh-color-text);
+  cursor: pointer;
+  padding: 0 var(--qh-space-3);
+  font-size: var(--qh-text-small);
+  font-weight: 650;
+}
+
+.editor-link-action:first-child {
+  background: var(--qh-color-action);
+  color: var(--qh-color-on-action);
+}
+
+.editor-link-composer__error {
+  grid-column: 2 / -1;
+  margin: 0;
+  color: var(--qh-color-diff-removed-text);
 }
 
 .editor-surface {
@@ -765,5 +824,13 @@ button.writing-section-bar {
   .editor-surface {
     min-height: 34rem;
     padding: var(--qh-space-4);
+  }
+
+  .editor-link-composer {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-link-composer__error {
+    grid-column: auto;
   }
 }

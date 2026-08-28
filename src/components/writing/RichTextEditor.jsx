@@ -31,9 +31,29 @@ export function synchronizeEditorValue(editor, value) {
   if (editor && editor.innerHTML !== value) editor.innerHTML = value;
 }
 
+export function captureEditorSelection(editor, selection) {
+  if (!editor || !selection || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  return editor.contains(range.commonAncestorContainer) ? range.cloneRange() : null;
+}
+
+export function restoreEditorSelection(range, selection) {
+  if (!range || !selection) return false;
+
+  selection.removeAllRanges();
+  selection.addRange(range);
+  return true;
+}
+
 export function RichTextEditor({ value, onChange }) {
   const editorRef = useRef(null);
   const initialHtmlRef = useRef({ __html: value });
+  const linkInputRef = useRef(null);
+  const linkSelectionRef = useRef(null);
+  const [isLinkComposerOpen, setIsLinkComposerOpen] = useState(false);
+  const [linkValue, setLinkValue] = useState("");
+  const [linkError, setLinkError] = useState("");
   const [commandStates, setCommandStates] = useState({
     bold: false,
     italic: false,
@@ -63,6 +83,10 @@ export function RichTextEditor({ value, onChange }) {
   }, [value]);
 
   useEffect(() => {
+    if (isLinkComposerOpen) linkInputRef.current?.focus();
+  }, [isLinkComposerOpen]);
+
+  useEffect(() => {
     if (typeof document === "undefined") return undefined;
 
     document.addEventListener("selectionchange", updateCommandStates);
@@ -77,12 +101,46 @@ export function RichTextEditor({ value, onChange }) {
     updateCommandStates();
   }, [updateCommandStates]);
 
-  const addLink = () => {
+  const saveLinkSelection = useCallback(() => {
     if (typeof window === "undefined") return;
 
-    const valueToLink = window.prompt("Enter an https:// URL");
-    const link = normalizeEditorLink(valueToLink ?? "");
-    if (link) runCommand("createLink", link);
+    linkSelectionRef.current = captureEditorSelection(editorRef.current, window.getSelection());
+  }, []);
+
+  const closeLinkComposer = useCallback(() => {
+    if (typeof window !== "undefined") {
+      restoreEditorSelection(linkSelectionRef.current, window.getSelection());
+    }
+    linkSelectionRef.current = null;
+    setIsLinkComposerOpen(false);
+    setLinkValue("");
+    setLinkError("");
+    editorRef.current?.focus();
+  }, []);
+
+  const openLinkComposer = () => {
+    if (!linkSelectionRef.current) saveLinkSelection();
+    setLinkValue("");
+    setLinkError("");
+    setIsLinkComposerOpen(true);
+  };
+
+  const submitLink = (event) => {
+    event.preventDefault();
+    const link = normalizeEditorLink(linkValue);
+    if (!link) {
+      setLinkError("Enter a valid http(s) URL.");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      restoreEditorSelection(linkSelectionRef.current, window.getSelection());
+    }
+    runCommand("createLink", link);
+    linkSelectionRef.current = null;
+    setIsLinkComposerOpen(false);
+    setLinkValue("");
+    setLinkError("");
   };
 
   const handlePaste = (event) => {
@@ -96,7 +154,14 @@ export function RichTextEditor({ value, onChange }) {
     { label: "Bold", command: "bold", icon: TextB, state: "bold" },
     { label: "Italic", command: "italic", icon: TextItalic, state: "italic" },
     { label: "Underline", command: "underline", icon: TextUnderline, state: "underline" },
-    { label: "Add link", onClick: addLink, icon: Link },
+    {
+      label: "Add link",
+      onClick: openLinkComposer,
+      onMouseDown: saveLinkSelection,
+      icon: Link,
+      controls: "editor-link-composer",
+      expanded: isLinkComposerOpen,
+    },
     { label: "Block quote", command: "formatBlock", value: "blockquote", icon: Quotes },
     {
       label: "Bulleted list",
@@ -129,19 +194,67 @@ export function RichTextEditor({ value, onChange }) {
             <option value="heading3">Heading 3</option>
           </select>
         </label>
-        {toolButtons.map(({ command, icon: Icon, label, onClick, state, value: commandValue }) => (
+        {toolButtons.map(({
+          command,
+          controls,
+          expanded,
+          icon: Icon,
+          label,
+          onClick,
+          onMouseDown,
+          state,
+          value: commandValue,
+        }) => (
           <button
+            aria-controls={controls}
+            aria-expanded={expanded}
             aria-label={label}
             aria-pressed={state ? commandStates[state] : undefined}
             className="editor-tool"
             key={label}
             onClick={onClick ?? (() => runCommand(command, commandValue))}
+            onMouseDown={onMouseDown}
             type="button"
           >
             <Icon aria-hidden="true" size={19} weight="bold" />
           </button>
         ))}
       </div>
+      {isLinkComposerOpen ? (
+        <form
+          aria-label="Add link"
+          className="editor-link-composer"
+          id="editor-link-composer"
+          noValidate
+          onSubmit={submitLink}
+          role="dialog"
+        >
+          <label htmlFor="editor-link-url">Link URL</label>
+          <input
+            aria-describedby="editor-link-error"
+            aria-invalid={Boolean(linkError)}
+            id="editor-link-url"
+            inputMode="url"
+            onChange={(event) => setLinkValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                closeLinkComposer();
+              }
+            }}
+            ref={linkInputRef}
+            type="url"
+            value={linkValue}
+          />
+          <div className="editor-link-composer__actions">
+            <button className="editor-link-action" type="submit">Apply link</button>
+            <button className="editor-link-action" onClick={closeLinkComposer} type="button">Cancel</button>
+          </div>
+          <p aria-live="polite" className="editor-link-composer__error" id="editor-link-error">
+            {linkError}
+          </p>
+        </form>
+      ) : null}
       <div
         aria-label="Article editor"
         aria-multiline="true"

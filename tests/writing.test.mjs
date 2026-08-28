@@ -452,3 +452,53 @@ test("active writing steps scroll into view only in the narrow navigator", async
     assert.equal(scrollActiveWritingStepIntoView(activeStep, undefined), false);
   });
 });
+
+test("link composer is closed by default and exposes an accessible trigger", async (t) => {
+  await withVite(t, async (vite) => {
+    const { RichTextEditor } = await vite.ssrLoadModule(
+      "/src/components/writing/RichTextEditor.jsx",
+    );
+    const markup = renderToStaticMarkup(
+      React.createElement(RichTextEditor, {
+        onChange: () => {},
+        value: WRITING_SCENARIO.articleHtml,
+      }),
+    );
+
+    assert.match(markup, /aria-label="Add link"/);
+    assert.match(markup, /aria-controls="editor-link-composer"/);
+    assert.match(markup, /aria-expanded="false"/);
+    assert.doesNotMatch(markup, /Link URL|Apply link|Enter an https:\/\/ URL/);
+  });
+});
+
+test("link selection helpers retain in-editor ranges and restore cloned ranges", async (t) => {
+  await withVite(t, async (vite) => {
+    const { captureEditorSelection, restoreEditorSelection } = await vite.ssrLoadModule(
+      "/src/components/writing/RichTextEditor.jsx",
+    );
+    const inEditorNode = {};
+    const clonedRange = { id: "cloned-selection" };
+    const sourceRange = {
+      commonAncestorContainer: inEditorNode,
+      cloneRange: () => clonedRange,
+    };
+    const editor = { contains: (node) => node === inEditorNode };
+    const sourceSelection = {
+      rangeCount: 1,
+      getRangeAt: () => sourceRange,
+    };
+    const restoredRanges = [];
+    const destinationSelection = {
+      addRange: (range) => restoredRanges.push(range),
+      removeAllRanges: () => restoredRanges.splice(0),
+    };
+
+    const capturedRange = captureEditorSelection(editor, sourceSelection);
+    assert.equal(capturedRange, clonedRange);
+    assert.equal(restoreEditorSelection(capturedRange, destinationSelection), true);
+    assert.deepEqual(restoredRanges, [clonedRange]);
+    assert.equal(captureEditorSelection(editor, { rangeCount: 0 }), null);
+    assert.equal(restoreEditorSelection(null, destinationSelection), false);
+  });
+});
