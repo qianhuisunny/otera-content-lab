@@ -244,6 +244,11 @@ a svg {
   padding: 2.5rem 2.75rem 6rem;
 }
 
+.content-library.writing-main {
+  max-width: none;
+  padding: 0;
+}
+
 .workflow-view {
   display: grid;
   width: 100%;

@@ -278,3 +278,72 @@ test("editor value synchronization preserves matching DOM and applies external c
     assert.equal(innerHtml, "<p>Replaced externally</p>");
   });
 });
+
+test("Writing workspace wires all four screens to the approved session", async (t) => {
+  await withVite(t, async (vite) => {
+    const { WritingWorkspace } = await vite.ssrLoadModule(
+      "/src/components/writing/WritingWorkspace.jsx",
+    );
+    for (const [step, expected] of [
+      ["brief", "Pick angle & format"],
+      ["outline", "Plan outline"],
+      ["draft", "Drafted first version"],
+      ["review", "Paragraph style"],
+    ]) {
+      const session = { ...createWritingSession(), currentStep: step, furthestStepIndex: 3 };
+      const markup = renderToStaticMarkup(
+        React.createElement(WritingWorkspace, { session, dispatch: () => {} }),
+      );
+      assert.match(markup, new RegExp(expected.replace(/[&]/g, "&amp;")));
+    }
+  });
+});
+
+test("Writing sidebar reports active, completed, locked, and disabled steps", async (t) => {
+  await withVite(t, async (vite) => {
+    const { WritingSidebar } = await vite.ssrLoadModule(
+      "/src/components/writing/WritingSidebar.jsx",
+    );
+    const markup = renderToStaticMarkup(
+      React.createElement(WritingSidebar, {
+        session: { ...createWritingSession(), currentStep: "outline", furthestStepIndex: 1 },
+        onStepChange: () => {},
+      }),
+    );
+    assert.match(markup, /aria-current="step"/);
+    assert.match(markup, /Pick angle &amp; format/);
+    assert.match(markup, /Review &amp; edit/);
+    assert.match(markup, /data-state="completed"/);
+    assert.match(markup, /data-state="active"/);
+    assert.match(markup, /data-state="locked"/);
+    assert.match(markup, /data-state="disabled"/);
+    assert.match(markup, /disabled=""/);
+  });
+});
+
+test("Writing topbar exposes the approved scenario and delegates Exit", async (t) => {
+  await withVite(t, async (vite) => {
+    const { WritingTopbar } = await vite.ssrLoadModule(
+      "/src/components/writing/WritingTopbar.jsx",
+    );
+    let exitCalls = 0;
+    const topbar = WritingTopbar({ onExit: () => { exitCalls += 1; } });
+    const exitControl = React.Children.toArray(topbar.props.children).find(
+      (child) => child.props?.onClick,
+    );
+    assert.ok(exitControl, "Exit must be an interactive control");
+    exitControl.props.onClick();
+    assert.equal(exitCalls, 1);
+
+    const markup = renderToStaticMarkup(topbar);
+    for (const text of [
+      "Exit",
+      "CREATING PAGE FOR",
+      WRITING_SCENARIO.title,
+      WRITING_SCENARIO.articleId,
+      `STATUS: ${WRITING_SCENARIO.status}`,
+    ]) {
+      assert.ok(markup.includes(text), `${text} must be rendered in the Writing topbar`);
+    }
+  });
+});

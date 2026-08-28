@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { WritingSidebar } from "./writing/WritingSidebar.jsx";
 
 const viewItems = [
   { id: "context", label: "Context" },
@@ -6,7 +7,13 @@ const viewItems = [
   { id: "writing", label: "Writing" },
 ];
 
-export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
+export function AppSidebar({
+  activeView,
+  onViewChange,
+  onWritingStepChange,
+  researchCutoff,
+  writingSession,
+}) {
   const tabRefs = useRef([]);
 
   const handleTabKeyDown = (event, index) => {
@@ -65,6 +72,10 @@ export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
           })}
         </div>
       </nav>
+
+      {activeView === "writing" && writingSession ? (
+        <WritingSidebar onStepChange={onWritingStepChange} session={writingSession} />
+      ) : null}
 
       <div className="sidebar-footer">
         <span className="sidebar-status">

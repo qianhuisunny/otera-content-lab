@@ -155,7 +155,7 @@ test("the app defaults to Context while exposing Workflow and Writing tabs", asy
   assert.doesNotMatch(pageMarkup, /Video Storyboarding Briefing/);
 });
 
-test("the Writing tab renders only the approved Otera briefing form", async (t) => {
+test("the Writing tab renders the full Otera workspace at the initial brief step", async (t) => {
   const vite = await createServer({
     appType: "custom",
     logLevel: "silent",
@@ -168,11 +168,23 @@ test("the Writing tab renders only the approved Otera briefing form", async (t) 
   const markup = renderToStaticMarkup(React.createElement(App, { initialView: "writing" }));
   const readableMarkup = markup.replaceAll("&#x27;", "'");
 
+  for (const text of [
+    "Exit",
+    "CREATING PAGE FOR",
+    "How governed AI agents automate insurance claims across legacy systems",
+    "OT-18",
+    "STATUS: Reviewing",
+    "BRIEF IT",
+    "WRITE IT",
+    "SHIP IT",
+  ]) {
+    assert.ok(readableMarkup.includes(text), `${text} must be rendered in the Writing shell`);
+  }
   for (const label of ["Linked opportunity", "Article format", "Who it's for", "Primary keyword", "What the searcher wants", "Additional directions", "Target length"]) {
     assert.ok(readableMarkup.includes(label), `${label} must be rendered in Writing`);
   }
+  assert.match(markup, /class="content-library writing-main"/);
   assert.match(markup, /Plan outline/);
-  assert.doesNotMatch(markup, /Article outline|Back to brief|Draft first version|What agentic claims automation changes/);
 });
 
 test("the workflow view uses registered sections and exact screenshot content", async (t) => {

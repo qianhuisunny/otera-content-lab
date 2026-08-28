@@ -6,7 +6,8 @@ import { ArtifactGrid } from "./components/ArtifactGrid";
 import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
-import { BriefStep } from "./components/writing/BriefStep";
+import { WritingTopbar } from "./components/writing/WritingTopbar";
+import { WritingWorkspace } from "./components/writing/WritingWorkspace";
 import { filterArtifacts } from "./data/artifactUtils";
 import { COLLECTION_STATS, OTERA_ARTIFACTS } from "./data/oteraArtifacts";
 import { createWritingSession, writingReducer } from "./data/writingSession";
@@ -67,27 +68,33 @@ export function App({ initialView = "context" }) {
         Skip to active content
       </a>
 
-      <header className="app-topbar">
-        <div className="app-brand">
-          <span className="app-mark" aria-hidden="true">
-            <Stack size={17} weight="bold" />
-          </span>
-          <strong>Content Lab</strong>
-          <span aria-hidden="true">/</span>
-          <span>Otera context library</span>
-        </div>
-      </header>
+      {activeView === "writing" ? (
+        <WritingTopbar onExit={() => setActiveView("workflow")} />
+      ) : (
+        <header className="app-topbar">
+          <div className="app-brand">
+            <span className="app-mark" aria-hidden="true">
+              <Stack size={17} weight="bold" />
+            </span>
+            <strong>Content Lab</strong>
+            <span aria-hidden="true">/</span>
+            <span>Otera context library</span>
+          </div>
+        </header>
+      )}
 
       <div className="app-shell">
         <AppSidebar
           activeView={activeView}
           onViewChange={setActiveView}
+          onWritingStepChange={(step) => dispatchWriting({ type: "go-to-step", step })}
           researchCutoff={COLLECTION_STATS.researchCutoff}
+          writingSession={writingSession}
         />
 
         <main
           aria-labelledby={`${activeView}-tab`}
-          className="content-library"
+          className={`content-library${activeView === "writing" ? " writing-main" : ""}`}
           id="content-library"
           role="tabpanel"
           tabIndex={-1}
@@ -95,11 +102,7 @@ export function App({ initialView = "context" }) {
           {activeView === "workflow" ? (
             <WorkflowView />
           ) : activeView === "writing" ? (
-            <BriefStep
-              brief={writingSession.brief}
-              dispatch={dispatchWriting}
-              onAdvance={() => {}}
-            />
+            <WritingWorkspace dispatch={dispatchWriting} session={writingSession} />
           ) : (
             <>
               <CollectionHeader
