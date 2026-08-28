@@ -36,3 +36,7 @@ Browser typing, native undo/redo, and live link application will be re-verified 
 ## Scope
 
 Committed files are limited to the Review editor implementation, Review CSS, writing tests, and this report. User-owned `README.md` and `src/components/CollectionHeader.jsx` changes, untracked `node_modules`, and unrelated workflow/hosting/content files remain untouched.
+
+## Follow-up — form-level Escape
+
+The original composer bound Escape only to the URL input, so Tab navigation to Apply link or Cancel lost the close shortcut. Escape handling now sits on the composer form, where key events from every composer control bubble to the same handler. The focused regression first failed because that handler was absent, then passed after implementation. Fresh verification: `npm test` 31 passed, build passed, Sites tests 4 passed, and `git diff --check` was clean.

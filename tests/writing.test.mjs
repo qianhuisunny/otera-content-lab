@@ -502,3 +502,23 @@ test("link selection helpers retain in-editor ranges and restore cloned ranges",
     assert.equal(restoreEditorSelection(null, destinationSelection), false);
   });
 });
+
+test("link composer closes from Escape anywhere within its form", async (t) => {
+  await withVite(t, async (vite) => {
+    const { handleLinkComposerKeyDown } = await vite.ssrLoadModule(
+      "/src/components/writing/RichTextEditor.jsx",
+    );
+    let closeCalls = 0;
+    let prevented = 0;
+    const escapeEvent = {
+      key: "Escape",
+      preventDefault: () => { prevented += 1; },
+    };
+
+    assert.equal(handleLinkComposerKeyDown(escapeEvent, () => { closeCalls += 1; }), true);
+    assert.equal(closeCalls, 1);
+    assert.equal(prevented, 1);
+    assert.equal(handleLinkComposerKeyDown({ key: "Enter", preventDefault: () => {} }, () => { closeCalls += 1; }), false);
+    assert.equal(closeCalls, 1);
+  });
+});

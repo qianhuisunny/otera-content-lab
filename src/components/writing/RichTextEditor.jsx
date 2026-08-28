@@ -46,6 +46,14 @@ export function restoreEditorSelection(range, selection) {
   return true;
 }
 
+export function handleLinkComposerKeyDown(event, closeComposer) {
+  if (event.key !== "Escape") return false;
+
+  event.preventDefault();
+  closeComposer();
+  return true;
+}
+
 export function RichTextEditor({ value, onChange }) {
   const editorRef = useRef(null);
   const initialHtmlRef = useRef({ __html: value });
@@ -226,6 +234,7 @@ export function RichTextEditor({ value, onChange }) {
           className="editor-link-composer"
           id="editor-link-composer"
           noValidate
+          onKeyDown={(event) => handleLinkComposerKeyDown(event, closeLinkComposer)}
           onSubmit={submitLink}
           role="dialog"
         >
@@ -236,12 +245,6 @@ export function RichTextEditor({ value, onChange }) {
             id="editor-link-url"
             inputMode="url"
             onChange={(event) => setLinkValue(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                closeLinkComposer();
-              }
-            }}
             ref={linkInputRef}
             type="url"
             value={linkValue}
