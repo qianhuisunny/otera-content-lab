@@ -180,9 +180,10 @@ test("draft screen exposes completed activity, research, export, and review acti
   await withVite(t, async (vite) => {
     const { DraftStep } = await vite.ssrLoadModule("/src/components/writing/DraftStep.jsx");
     const markup = renderToStaticMarkup(React.createElement(DraftStep, { onAdvance: () => {} }));
-    for (const text of ["Drafted first version", "Generating research questions", "Researching the topic", "Writing the draft", "Post-processing", "Governed claims automation research", "Export research", "Review & edit"]) {
+    for (const text of ["Drafted first version", "Generating research questions", "Researching the topic", "Writing the draft", "Post-processing", "Governed claims automation research", "Export research"]) {
       assert.ok(markup.includes(text), `${text} must be rendered`);
     }
+    assert.match(markup, /Review &amp; edit/);
     assert.match(markup, /aria-expanded="true"/);
   });
 });
