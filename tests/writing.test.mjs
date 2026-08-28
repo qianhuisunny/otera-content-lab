@@ -172,3 +172,65 @@ test("draft screen exposes completed activity, research, export, and review acti
     assert.match(markup, /aria-expanded="true"/);
   });
 });
+
+test("draft accordions keep controlled panels mounted when closed", async (t) => {
+  await withVite(t, async (vite) => {
+    const { DraftStep } = await vite.ssrLoadModule("/src/components/writing/DraftStep.jsx");
+    const markup = renderToStaticMarkup(React.createElement(DraftStep, { onAdvance: () => {} }));
+
+    for (const id of ["questions", "research", "writing"]) {
+      const panel = markup.match(new RegExp(`<div[^>]*id="activity-details-${id}"[^>]*>`))?.[0] ?? "";
+      assert.ok(panel.includes('hidden=""'), `activity-details-${id} must stay mounted and hidden`);
+    }
+
+    assert.match(markup, /id="activity-details-post"/);
+    assert.match(markup, /id="research-details"/);
+  });
+});
+
+test("research export cleans the temporary link after a click failure", async (t) => {
+  await withVite(t, async (vite) => {
+    const { downloadResearchMarkdown } = await vite.ssrLoadModule("/src/components/writing/DraftStep.jsx");
+    const originalDocument = globalThis.document;
+    const originalURL = globalThis.URL;
+    let exportedBlob;
+    let revokedUrl;
+    let appendedLink;
+    let removalCount = 0;
+    const link = {
+      click() {
+        throw new Error("download blocked");
+      },
+      remove() {
+        removalCount += 1;
+      },
+    };
+
+    globalThis.document = {
+      body: { append: (value) => { appendedLink = value; } },
+      createElement: (tagName) => {
+        assert.equal(tagName, "a");
+        return link;
+      },
+    };
+    globalThis.URL = {
+      createObjectURL: (blob) => {
+        exportedBlob = blob;
+        return "blob:otera-research";
+      },
+      revokeObjectURL: (value) => { revokedUrl = value; },
+    };
+    t.after(() => {
+      globalThis.document = originalDocument;
+      globalThis.URL = originalURL;
+    });
+
+    assert.throws(() => downloadResearchMarkdown(), /download blocked/);
+    assert.equal(appendedLink, link);
+    assert.equal(link.download, "otera-governed-claims-research.md");
+    assert.equal(link.href, "blob:otera-research");
+    assert.equal(removalCount, 1);
+    assert.equal(revokedUrl, "blob:otera-research");
+    assert.match(await exportedBlob.text(), /^# Governed claims automation research/m);
+  });
+});

@@ -5,6 +5,26 @@ import { ACTIVITY_ITEMS, WRITING_SCENARIO } from "../../data/writingScenario.js"
 import { buildResearchMarkdown } from "../../data/writingSession.js";
 import { WritingPageHeader } from "./WritingPageHeader.jsx";
 
+export function downloadResearchMarkdown() {
+  let objectUrl = "";
+  let link;
+  try {
+    const file = new Blob([buildResearchMarkdown()], { type: "text/markdown;charset=utf-8" });
+    objectUrl = URL.createObjectURL(file);
+    link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = "otera-governed-claims-research.md";
+    document.body.append(link);
+    link.click();
+  } finally {
+    try {
+      link?.remove();
+    } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    }
+  }
+}
+
 export function DraftStep({ onAdvance }) {
   const [openActivityIds, setOpenActivityIds] = useState(new Set(["post"]));
   const [isResearchOpen, setIsResearchOpen] = useState(true);
@@ -24,22 +44,11 @@ export function DraftStep({ onAdvance }) {
   };
 
   const exportResearch = () => {
-    let objectUrl = "";
     try {
-      const markdown = buildResearchMarkdown();
-      const file = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-      objectUrl = URL.createObjectURL(file);
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = "otera-governed-claims-research.md";
-      document.body.append(link);
-      link.click();
-      link.remove();
+      downloadResearchMarkdown();
       setExportError("");
     } catch {
       setExportError("Research export could not be created.");
-    } finally {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     }
   };
 
@@ -82,19 +91,17 @@ export function DraftStep({ onAdvance }) {
                   </span>
                   <CaretDown aria-hidden="true" size={18} weight="bold" />
                 </button>
-                {isOpen ? (
-                  <div className="activity-details" id={panelId}>
-                    {item.details ? (
-                      item.details.map((detail) => (
-                        <p className="activity-detail" key={detail}>
-                          {detail}
-                        </p>
-                      ))
-                    ) : (
-                      <p className="activity-detail">Completed using the approved brief, outline, and evidence posture.</p>
-                    )}
-                  </div>
-                ) : null}
+                <div className="activity-details" hidden={!isOpen} id={panelId}>
+                  {item.details ? (
+                    item.details.map((detail) => (
+                      <p className="activity-detail" key={detail}>
+                        {detail}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="activity-detail">Completed using the approved brief, outline, and evidence posture.</p>
+                  )}
+                </div>
               </article>
             );
           })}
@@ -115,18 +122,16 @@ export function DraftStep({ onAdvance }) {
           </span>
           <CaretDown aria-hidden="true" size={18} weight="bold" />
         </button>
-        {isResearchOpen ? (
-          <div className="research-summary" id="research-details">
-            <h2>{WRITING_SCENARIO.researchTitle}</h2>
-            <p>{WRITING_SCENARIO.researchSummary}</p>
-            <Button onClick={exportResearch} type="button" variant="secondary">
-              Export research
-            </Button>
-            <p aria-live="polite" className="writing-error">
-              {exportError}
-            </p>
-          </div>
-        ) : null}
+        <div className="research-summary" hidden={!isResearchOpen} id="research-details">
+          <h2>{WRITING_SCENARIO.researchTitle}</h2>
+          <p>{WRITING_SCENARIO.researchSummary}</p>
+          <Button onClick={exportResearch} type="button" variant="secondary">
+            Export research
+          </Button>
+          <p aria-live="polite" className="writing-error">
+            {exportError}
+          </p>
+        </div>
       </section>
 
       <div className="writing-actions">
