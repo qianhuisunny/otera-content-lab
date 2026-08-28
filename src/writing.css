@@ -196,6 +196,11 @@
   line-height: 1.15;
 }
 
+.writing-page-header h1:focus {
+  outline: 3px solid var(--qh-color-focus);
+  outline-offset: 4px;
+}
+
 .writing-page-header p {
   max-width: 44rem;
   margin: var(--qh-space-3) 0 0;

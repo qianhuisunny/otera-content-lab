@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { WritingSidebar } from "./writing/WritingSidebar.jsx";
 
 const viewItems = [
@@ -6,6 +6,17 @@ const viewItems = [
   { id: "workflow", label: "Workflow" },
   { id: "writing", label: "Writing" },
 ];
+
+export function focusDestinationTabAfterWriting(previousView, currentView, tabNodes) {
+  if (previousView !== "writing" || currentView === "writing") return false;
+
+  const currentIndex = viewItems.findIndex((item) => item.id === currentView);
+  const destinationTab = currentIndex >= 0 ? tabNodes?.[currentIndex] : null;
+  if (typeof destinationTab?.focus !== "function") return false;
+
+  destinationTab.focus();
+  return true;
+}
 
 export function AppSidebar({
   activeView,
@@ -15,6 +26,16 @@ export function AppSidebar({
   writingSession,
 }) {
   const tabRefs = useRef([]);
+  const previousActiveViewRef = useRef(activeView);
+
+  useEffect(() => {
+    focusDestinationTabAfterWriting(
+      previousActiveViewRef.current,
+      activeView,
+      tabRefs.current,
+    );
+    previousActiveViewRef.current = activeView;
+  }, [activeView]);
 
   const handleTabKeyDown = (event, index) => {
     let nextIndex = null;

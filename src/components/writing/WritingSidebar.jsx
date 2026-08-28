@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Check, Circle } from "@phosphor-icons/react";
 import { WRITING_PHASES, WRITING_STEP_ORDER } from "../../data/writingScenario.js";
 import { canVisitWritingStep } from "../../data/writingSession.js";
@@ -21,7 +22,29 @@ const stateLabels = {
   locked: "Locked",
 };
 
+export function scrollActiveWritingStepIntoView(
+  activeStep,
+  viewport = typeof window === "undefined" ? undefined : window,
+) {
+  if (
+    typeof activeStep?.scrollIntoView !== "function"
+    || typeof viewport?.matchMedia !== "function"
+    || !viewport.matchMedia("(max-width: 56rem)").matches
+  ) {
+    return false;
+  }
+
+  activeStep.scrollIntoView({ block: "nearest", inline: "nearest" });
+  return true;
+}
+
 export function WritingSidebar({ session, onStepChange }) {
+  const activeStepRef = useRef(null);
+
+  useEffect(() => {
+    scrollActiveWritingStepIntoView(activeStepRef.current);
+  }, [session.currentStep]);
+
   return (
     <nav aria-label="Writing workflow" className="writing-sidebar">
       {WRITING_PHASES.map((phase) => {
@@ -45,6 +68,7 @@ export function WritingSidebar({ session, onStepChange }) {
                       aria-current={isActive ? "step" : undefined}
                       disabled={isDisabled}
                       onClick={() => onStepChange(step.id)}
+                      ref={isActive ? activeStepRef : undefined}
                       type="button"
                     >
                       <span className="writing-step__marker" aria-hidden="true">

@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test, { after, before } from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
@@ -18,14 +21,25 @@ import {
   writingReducer,
 } from "../src/data/writingSession.js";
 
-async function withVite(t, callback) {
-  const vite = await createServer({
+const viteCacheDir = await mkdtemp(join(tmpdir(), "otera-writing-vite-"));
+let vite;
+
+before(async () => {
+  vite = await createServer({
     appType: "custom",
+    cacheDir: viteCacheDir,
     logLevel: "silent",
     root: new URL("..", import.meta.url).pathname,
     server: { middlewareMode: true },
   });
-  t.after(() => vite.close());
+});
+
+after(async () => {
+  await vite?.close();
+  await rm(viteCacheDir, { force: true, recursive: true });
+});
+
+async function withVite(_t, callback) {
   return callback(vite);
 }
 
@@ -345,5 +359,96 @@ test("Writing topbar exposes the approved scenario and delegates Exit", async (t
     ]) {
       assert.ok(markup.includes(text), `${text} must be rendered in the Writing topbar`);
     }
+  });
+});
+
+test("writing screen headings are programmatically focusable", async (t) => {
+  await withVite(t, async (vite) => {
+    const { WritingPageHeader } = await vite.ssrLoadModule(
+      "/src/components/writing/WritingPageHeader.jsx",
+    );
+    const markup = renderToStaticMarkup(
+      React.createElement(WritingPageHeader, {
+        description: "Supporting copy",
+        meta: "Brief",
+        title: "Pick angle & format",
+      }),
+    );
+
+    assert.match(markup, /<h1[^>]*tabindex="-1"[^>]*>/);
+  });
+});
+
+test("writing heading focus runs after a step change but not on initial render", async (t) => {
+  await withVite(t, async (vite) => {
+    const { focusWritingHeadingAfterStepChange } = await vite.ssrLoadModule(
+      "/src/components/writing/WritingWorkspace.jsx",
+    );
+    let queryCalls = 0;
+    let focusCalls = 0;
+    const workspace = {
+      querySelector(selector) {
+        queryCalls += 1;
+        assert.equal(selector, "[data-writing-page-heading]");
+        return { focus: () => { focusCalls += 1; } };
+      },
+    };
+
+    assert.equal(focusWritingHeadingAfterStepChange("brief", "brief", workspace), false);
+    assert.equal(queryCalls, 0);
+    assert.equal(focusCalls, 0);
+
+    assert.equal(focusWritingHeadingAfterStepChange("brief", "outline", workspace), true);
+    assert.equal(queryCalls, 1);
+    assert.equal(focusCalls, 1);
+  });
+});
+
+test("primary-tab focus transfers only when leaving Writing", async (t) => {
+  await withVite(t, async (vite) => {
+    const { focusDestinationTabAfterWriting } = await vite.ssrLoadModule(
+      "/src/components/AppSidebar.jsx",
+    );
+    const focusCalls = [];
+    const tabNodes = [
+      { focus: () => focusCalls.push("context") },
+      { focus: () => focusCalls.push("workflow") },
+      { focus: () => focusCalls.push("writing") },
+    ];
+
+    assert.equal(focusDestinationTabAfterWriting("context", "workflow", tabNodes), false);
+    assert.deepEqual(focusCalls, []);
+
+    assert.equal(focusDestinationTabAfterWriting("writing", "workflow", tabNodes), true);
+    assert.deepEqual(focusCalls, ["workflow"]);
+  });
+});
+
+test("active writing steps scroll into view only in the narrow navigator", async (t) => {
+  await withVite(t, async (vite) => {
+    const { scrollActiveWritingStepIntoView } = await vite.ssrLoadModule(
+      "/src/components/writing/WritingSidebar.jsx",
+    );
+    const scrollCalls = [];
+    const activeStep = {
+      scrollIntoView: (options) => scrollCalls.push(options),
+    };
+    const narrowViewport = {
+      matchMedia(query) {
+        assert.equal(query, "(max-width: 56rem)");
+        return { matches: true };
+      },
+    };
+    const wideViewport = {
+      matchMedia: () => ({ matches: false }),
+    };
+
+    assert.equal(scrollActiveWritingStepIntoView(activeStep, wideViewport), false);
+    assert.deepEqual(scrollCalls, []);
+
+    assert.equal(scrollActiveWritingStepIntoView(activeStep, narrowViewport), true);
+    assert.deepEqual(scrollCalls, [{ block: "nearest", inline: "nearest" }]);
+
+    assert.equal(scrollActiveWritingStepIntoView(activeStep, undefined), false);
   });
 });
