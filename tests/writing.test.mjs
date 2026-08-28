@@ -113,8 +113,8 @@ test("brief screen renders the approved controlled fields", async (t) => {
       assert.ok(readableMarkup.includes(label), `${label} must be rendered`);
     }
     assert.match(markup, /Plan outline/);
-    assert.doesNotMatch(markup, /Regenerate outline/);
-    assert.match(markup, /id="brief-ready"/);
+    assert.match(markup, /Regenerate outline/);
+    assert.doesNotMatch(markup, /Brief is ready for the next step\./);
   });
 });
 
@@ -141,5 +141,23 @@ test("brief controls retain accessible validation and disclosure semantics", asy
     }
 
     assert.doesNotMatch(briefMarkup, /role="menu"|role="menuitemradio"|aria-checked=/);
+  });
+});
+
+test("outline screen renders editable Otera structure and actions", async (t) => {
+  await withVite(t, async (vite) => {
+    const { OutlineStep } = await vite.ssrLoadModule("/src/components/writing/OutlineStep.jsx");
+    const markup = renderToStaticMarkup(
+      React.createElement(OutlineStep, {
+        outline: WRITING_SCENARIO.outline,
+        dispatch: () => {},
+        onAdvance: () => {},
+        onBack: () => {},
+      }),
+    );
+    assert.match(markup, /Plan outline/);
+    assert.match(markup, /What agentic claims automation changes/);
+    assert.match(markup, /Draft first version/);
+    assert.match(markup, /h2:/);
   });
 });

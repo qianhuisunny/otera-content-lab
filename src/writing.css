@@ -162,7 +162,7 @@
 .writing-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--qh-space-3);
   border-top: 1px solid var(--qh-color-border);
   padding-top: var(--qh-space-5);
@@ -175,11 +175,29 @@
   font-weight: 600;
 }
 
-.writing-confirmation {
+.writing-helper {
   margin: 0;
-  color: var(--qh-color-diff-added-text);
+  color: var(--qh-color-text-muted);
   font-size: var(--qh-text-small);
-  font-weight: 600;
+  line-height: 1.5;
+}
+
+.writing-outline-editor {
+  min-height: 48rem;
+  border: 0;
+  border-radius: var(--qh-radius-inline);
+  background: var(--qh-color-surface);
+  color: var(--qh-color-text);
+  font-family: inherit;
+  font-size: var(--qh-text-body);
+  line-height: 1.9;
+  padding: var(--qh-space-4);
+  resize: vertical;
+}
+
+.writing-outline-editor:focus-visible {
+  outline: 3px solid var(--qh-color-focus);
+  outline-offset: 2px;
 }
 
 @media (max-width: 45rem) {

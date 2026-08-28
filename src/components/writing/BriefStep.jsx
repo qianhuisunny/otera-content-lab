@@ -11,7 +11,6 @@ const REQUIRED_FIELDS = ["format", "audiences", "keyword", "targetLength"];
 
 export function BriefStep({ brief, dispatch, onAdvance }) {
   const [errors, setErrors] = useState({});
-  const [confirmation, setConfirmation] = useState("");
   const [isFormatMenuOpen, setIsFormatMenuOpen] = useState(false);
   const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
   const formatRef = useRef(null);
@@ -26,17 +25,14 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
   };
 
   const updateField = (event) => {
-    setConfirmation("");
     dispatch({ type: "set-brief-field", field: event.target.name, value: event.target.value });
   };
 
   const removeAudience = (audience) => {
-    setConfirmation("");
     dispatch({ type: "set-audiences", value: brief.audiences.filter((item) => item !== audience) });
   };
 
   const addAudience = (audience) => {
-    setConfirmation("");
     dispatch({ type: "set-audiences", value: [...brief.audiences, audience] });
     setIsAudienceMenuOpen(false);
   };
@@ -46,12 +42,10 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
     const nextErrors = validateBrief(brief);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length === 0) {
-      setConfirmation("Brief is ready for the next step.");
       onAdvance();
       return;
     }
 
-    setConfirmation("");
     const firstInvalidField = REQUIRED_FIELDS.find((field) => nextErrors[field]);
     requiredControlRefs[firstInvalidField]?.current?.focus();
   };
@@ -203,11 +197,15 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
         </div>
 
         <div className="writing-actions">
+          <Button
+            onClick={() => dispatch({ type: "reset-outline" })}
+            type="button"
+            variant="secondary"
+          >
+            Regenerate outline
+          </Button>
           <Button type="submit">Plan outline</Button>
         </div>
-        <p aria-live="polite" className="writing-confirmation" id="brief-ready">
-          {confirmation}
-        </p>
       </form>
     </section>
   );
