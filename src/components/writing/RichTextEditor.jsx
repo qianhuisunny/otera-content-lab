@@ -27,8 +27,13 @@ const QUERY_COMMANDS = {
   orderedList: "insertOrderedList",
 };
 
+export function synchronizeEditorValue(editor, value) {
+  if (editor && editor.innerHTML !== value) editor.innerHTML = value;
+}
+
 export function RichTextEditor({ value, onChange }) {
   const editorRef = useRef(null);
+  const initialHtmlRef = useRef({ __html: value });
   const [commandStates, setCommandStates] = useState({
     bold: false,
     italic: false,
@@ -40,15 +45,22 @@ export function RichTextEditor({ value, onChange }) {
   const updateCommandStates = useCallback(() => {
     if (typeof document === "undefined") return;
 
-    setCommandStates(
-      Object.fromEntries(
-        Object.entries(QUERY_COMMANDS).map(([name, command]) => [
-          name,
-          document.queryCommandState(command),
-        ]),
-      ),
+    const nextStates = Object.fromEntries(
+      Object.entries(QUERY_COMMANDS).map(([name, command]) => [
+        name,
+        document.queryCommandState(command),
+      ]),
     );
+    setCommandStates((currentStates) => (
+      Object.keys(QUERY_COMMANDS).every((name) => currentStates[name] === nextStates[name])
+        ? currentStates
+        : nextStates
+    ));
   }, []);
+
+  useEffect(() => {
+    synchronizeEditorValue(editorRef.current, value);
+  }, [value]);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -135,7 +147,7 @@ export function RichTextEditor({ value, onChange }) {
         aria-multiline="true"
         className="editor-surface"
         contentEditable
-        dangerouslySetInnerHTML={{ __html: value }}
+        dangerouslySetInnerHTML={initialHtmlRef.current}
         onInput={(event) => onChange(event.currentTarget.innerHTML)}
         onPaste={handlePaste}
         ref={editorRef}

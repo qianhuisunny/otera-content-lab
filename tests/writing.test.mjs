@@ -253,3 +253,28 @@ test("review screen renders an editable article toolbar and read-only coverage",
     assert.doesNotMatch(markup, /Highlight any passage|leave a note|agent applies your notes/i);
   });
 });
+
+test("editor value synchronization preserves matching DOM and applies external changes", async (t) => {
+  await withVite(t, async (vite) => {
+    const { synchronizeEditorValue } = await vite.ssrLoadModule("/src/components/writing/RichTextEditor.jsx");
+    let innerHtml = "<p>Edited locally</p>";
+    let writes = 0;
+    const editor = {
+      get innerHTML() {
+        return innerHtml;
+      },
+      set innerHTML(value) {
+        writes += 1;
+        innerHtml = value;
+      },
+    };
+
+    synchronizeEditorValue(editor, "<p>Edited locally</p>");
+    assert.equal(writes, 0);
+    assert.equal(innerHtml, "<p>Edited locally</p>");
+
+    synchronizeEditorValue(editor, "<p>Replaced externally</p>");
+    assert.equal(writes, 1);
+    assert.equal(innerHtml, "<p>Replaced externally</p>");
+  });
+});
