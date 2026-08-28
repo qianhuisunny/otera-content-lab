@@ -337,6 +337,194 @@ button.writing-section-bar {
   font-weight: 600;
 }
 
+.review-layout {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem);
+  gap: var(--qh-space-6);
+}
+
+.rich-editor,
+.coverage-panel {
+  min-width: 0;
+  border: 1px solid var(--qh-color-border);
+  border-radius: var(--qh-radius-tile);
+  background: var(--qh-color-surface);
+}
+
+.editor-toolbar {
+  position: sticky;
+  top: var(--qh-space-8);
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qh-space-2);
+  border-bottom: 1px solid var(--qh-color-border);
+  background: var(--qh-color-surface);
+  padding: var(--qh-space-3);
+}
+
+.editor-tool,
+.editor-style-select select {
+  min-height: 2.5rem;
+  border: 1px solid var(--qh-color-border);
+  border-radius: var(--qh-radius-inline);
+  background: var(--qh-color-surface);
+  color: var(--qh-color-text);
+}
+
+.editor-tool {
+  display: inline-grid;
+  width: 2.5rem;
+  place-items: center;
+  cursor: pointer;
+}
+
+.editor-tool:hover,
+.editor-tool[aria-pressed="true"] {
+  background: var(--qh-color-control-muted);
+}
+
+.editor-style-select select {
+  padding: 0 var(--qh-space-3);
+  font-size: var(--qh-text-small);
+}
+
+.editor-tool:focus-visible,
+.editor-style-select select:focus-visible,
+.editor-surface:focus-visible {
+  outline: 3px solid var(--qh-color-focus);
+  outline-offset: 2px;
+}
+
+.editor-surface {
+  max-width: 46rem;
+  min-height: 42rem;
+  margin-inline: auto;
+  padding: var(--qh-space-6);
+  color: var(--qh-color-text);
+  font-size: var(--qh-text-body);
+  line-height: 1.75;
+  outline: none;
+}
+
+.editor-surface > :first-child {
+  margin-top: 0;
+}
+
+.editor-surface h1,
+.editor-surface h2,
+.editor-surface h3 {
+  line-height: 1.2;
+}
+
+.editor-surface h1 {
+  font-size: var(--qh-text-title);
+}
+
+.editor-surface h2 {
+  margin-top: var(--qh-space-7);
+  font-size: 1.35rem;
+}
+
+.editor-surface h3 {
+  font-size: var(--qh-text-body);
+}
+
+.editor-surface a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
+}
+
+.editor-surface blockquote {
+  margin-inline: 0;
+  border-left: 3px solid var(--qh-color-border);
+  color: var(--qh-color-text-muted);
+  padding-left: var(--qh-space-4);
+}
+
+.editor-surface table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--qh-text-small);
+}
+
+.editor-surface th,
+.editor-surface td {
+  border: 1px solid var(--qh-color-border);
+  padding: var(--qh-space-2) var(--qh-space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.coverage-panel {
+  position: sticky;
+  top: calc(var(--qh-space-8) + var(--qh-space-4));
+  display: grid;
+  gap: var(--qh-space-5);
+  padding: var(--qh-space-5);
+}
+
+.coverage-score {
+  display: flex;
+  align-items: center;
+  gap: var(--qh-space-3);
+}
+
+.coverage-score svg,
+.coverage-list svg,
+.coverage-criterion svg {
+  flex: none;
+}
+
+.coverage-score h2,
+.coverage-score p {
+  margin: 0;
+}
+
+.coverage-score h2 {
+  font-size: var(--qh-text-body);
+}
+
+.coverage-score p {
+  color: var(--qh-color-text-muted);
+  font-size: var(--qh-text-small);
+}
+
+.coverage-list,
+.coverage-criterion {
+  display: grid;
+  gap: var(--qh-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coverage-list li,
+.coverage-criterion li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--qh-space-2);
+  font-size: var(--qh-text-small);
+  line-height: 1.45;
+}
+
+.coverage-list li {
+  color: var(--qh-color-text-muted);
+}
+
+.coverage-list li[data-state="covered"] {
+  color: var(--qh-color-text);
+}
+
+.coverage-criterion {
+  border-top: 1px solid var(--qh-color-border);
+  padding-top: var(--qh-space-4);
+}
+
 @media (max-width: 45rem) {
   .writing-page {
     padding: var(--qh-space-6) var(--qh-space-4) var(--qh-space-7);
@@ -353,5 +541,14 @@ button.writing-section-bar {
 
   .writing-section-bar {
     align-items: flex-start;
+  }
+
+  .review-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-surface {
+    min-height: 34rem;
+    padding: var(--qh-space-4);
   }
 }

@@ -234,3 +234,22 @@ test("research export cleans the temporary link after a click failure", async (t
     assert.match(await exportedBlob.text(), /^# Governed claims automation research/m);
   });
 });
+
+test("review screen renders an editable article toolbar and read-only coverage", async (t) => {
+  await withVite(t, async (vite) => {
+    const { ReviewStep } = await vite.ssrLoadModule("/src/components/writing/ReviewStep.jsx");
+    const markup = renderToStaticMarkup(
+      React.createElement(ReviewStep, {
+        articleHtml: WRITING_SCENARIO.articleHtml,
+        dispatch: () => {},
+      }),
+    );
+    for (const label of ["Paragraph style", "Bold", "Italic", "Underline", "Add link", "Block quote", "Bulleted list", "Numbered list", "Undo", "Redo"]) {
+      assert.ok(markup.includes(label), `${label} must be rendered`);
+    }
+    assert.match(markup, /contenteditable="true"/i);
+    assert.match(markup, /Coverage/);
+    assert.match(markup, /independent customer evidence/i);
+    assert.doesNotMatch(markup, /Highlight any passage|leave a note|agent applies your notes/i);
+  });
+});
