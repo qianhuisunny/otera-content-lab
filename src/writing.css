@@ -492,6 +492,11 @@ button.writing-section-bar {
   padding: var(--qh-space-5);
 }
 
+.activity-details[hidden],
+.research-summary[hidden] {
+  display: none;
+}
+
 .research-summary h2,
 .research-summary p {
   margin: 0;
@@ -644,6 +649,12 @@ button.writing-section-bar {
   outline: none;
 }
 
+.editor-surface:empty::before {
+  color: var(--qh-color-text-muted);
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
 .editor-surface > :first-child {
   margin-top: 0;
 }
@@ -781,6 +792,14 @@ button.writing-section-bar {
 
   .writing-step button {
     width: 12rem;
+  }
+
+  .review-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .coverage-panel {
+    position: static;
   }
 }
 
