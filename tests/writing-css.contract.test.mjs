@@ -94,6 +94,10 @@ function selectorMatches(selector, element) {
 
   const pseudoClasses = [...selector.matchAll(/:(?!:)([\w-]+)/g)].map((match) => match[1]);
   if (pseudoClasses.includes("empty") && !element.empty) return false;
+  if (
+    /:has\(\s*>\s*br:only-child\s*\)/.test(selector)
+    && (element.children?.length !== 1 || element.children[0] !== "br")
+  ) return false;
 
   const classes = [...selector.matchAll(/\.([\w-]+)/g)].map((match) => match[1]);
   if (!classes.every((className) => element.classes.includes(className))) return false;
@@ -171,14 +175,23 @@ test("the review layout stacks at tablet widths without changing desktop or mobi
   assert.equal(computedProperty(coverage, "position", 640), "static");
 });
 
-test("an empty editor surface exposes its data-placeholder text", () => {
-  const placeholder = {
+test("empty and browser-cleared editor surfaces expose their data-placeholder text", () => {
+  const editor = {
     attributes: ["data-placeholder"],
     classes: ["editor-surface"],
-    empty: true,
     pseudoElement: "before",
   };
 
-  assert.equal(computedProperty(placeholder, "content", 1280), "attr(data-placeholder)");
-  assert.notEqual(computedProperty(placeholder, "color", 1280), "transparent");
+  assert.equal(
+    computedProperty({ ...editor, children: [], empty: true }, "content", 1280),
+    "attr(data-placeholder)",
+  );
+  assert.equal(
+    computedProperty({ ...editor, children: ["br"], empty: false }, "content", 1280),
+    "attr(data-placeholder)",
+  );
+  assert.equal(
+    computedProperty({ ...editor, children: ["p"], empty: false }, "content", 1280),
+    undefined,
+  );
 });

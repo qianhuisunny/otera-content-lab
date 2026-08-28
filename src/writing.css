@@ -649,7 +649,8 @@ button.writing-section-bar {
   outline: none;
 }
 
-.editor-surface:empty::before {
+.editor-surface:empty::before,
+.editor-surface:has(> br:only-child)::before {
   color: var(--qh-color-text-muted);
   content: attr(data-placeholder);
   pointer-events: none;
