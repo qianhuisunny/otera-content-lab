@@ -137,7 +137,7 @@ export function DraftStep({ onAdvance }) {
       <div className="writing-actions">
         <span className="writing-helper">The draft is ready for editorial review.</span>
         <Button onClick={onAdvance} type="button">
-          <span dangerouslySetInnerHTML={{ __html: "Review & edit" }} />
+          <span>Review & edit</span>
         </Button>
       </div>
     </section>

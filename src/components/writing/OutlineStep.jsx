@@ -2,8 +2,18 @@ import { useState } from "react";
 import { Button } from "@qianhui/ui";
 import { WritingPageHeader } from "./WritingPageHeader.jsx";
 
+export function clearResolvedOutlineError(error, outline) {
+  return error && outline.trim() ? "" : error;
+}
+
 export function OutlineStep({ outline, dispatch, onAdvance, onBack }) {
   const [error, setError] = useState("");
+
+  const updateOutline = (event) => {
+    const { value } = event.target;
+    dispatch({ type: "set-outline", value });
+    setError((currentError) => clearResolvedOutlineError(currentError, value));
+  };
 
   const submitOutline = (event) => {
     event.preventDefault();
@@ -36,7 +46,7 @@ export function OutlineStep({ outline, dispatch, onAdvance, onBack }) {
             className="writing-outline-editor"
             id="writing-outline"
             name="outline"
-            onChange={(event) => dispatch({ type: "set-outline", value: event.target.value })}
+            onChange={updateOutline}
             value={outline}
           />
           <p aria-live="polite" className="writing-error" id="writing-outline-error">

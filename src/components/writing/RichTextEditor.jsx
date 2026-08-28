@@ -27,6 +27,8 @@ const QUERY_COMMANDS = {
   orderedList: "insertOrderedList",
 };
 
+const EDITOR_PLACEHOLDER = "Start writing your article…";
+
 export function synchronizeEditorValue(editor, value) {
   if (editor && editor.innerHTML !== value) editor.innerHTML = value;
 }
@@ -261,8 +263,10 @@ export function RichTextEditor({ value, onChange }) {
       <div
         aria-label="Article editor"
         aria-multiline="true"
+        aria-placeholder={EDITOR_PLACEHOLDER}
         className="editor-surface"
         contentEditable
+        data-placeholder={EDITOR_PLACEHOLDER}
         dangerouslySetInnerHTML={initialHtmlRef.current}
         onInput={(event) => onChange(event.currentTarget.innerHTML)}
         onPaste={handlePaste}

@@ -9,6 +9,14 @@ const FORMAT_OPTIONS = ["Explainer", "Technical guide", "Executive brief"];
 const AUDIENCE_OPTIONS = WRITING_SCENARIO.brief.audiences;
 const REQUIRED_FIELDS = ["format", "audiences", "keyword", "targetLength"];
 
+export function clearResolvedBriefError(errors, field, brief) {
+  if (!errors[field] || validateBrief(brief)[field]) return errors;
+
+  const nextErrors = { ...errors };
+  delete nextErrors[field];
+  return nextErrors;
+}
+
 export function BriefStep({ brief, dispatch, onAdvance }) {
   const [errors, setErrors] = useState({});
   const [isFormatMenuOpen, setIsFormatMenuOpen] = useState(false);
@@ -25,16 +33,44 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
   };
 
   const updateField = (event) => {
-    dispatch({ type: "set-brief-field", field: event.target.name, value: event.target.value });
+    const { name: field, value } = event.target;
+    dispatch({ type: "set-brief-field", field, value });
+    setErrors((currentErrors) => clearResolvedBriefError(
+      currentErrors,
+      field,
+      { ...brief, [field]: value },
+    ));
   };
 
   const removeAudience = (audience) => {
-    dispatch({ type: "set-audiences", value: brief.audiences.filter((item) => item !== audience) });
+    const audiences = brief.audiences.filter((item) => item !== audience);
+    dispatch({ type: "set-audiences", value: audiences });
+    setErrors((currentErrors) => clearResolvedBriefError(
+      currentErrors,
+      "audiences",
+      { ...brief, audiences },
+    ));
   };
 
   const addAudience = (audience) => {
-    dispatch({ type: "set-audiences", value: [...brief.audiences, audience] });
+    const audiences = [...brief.audiences, audience];
+    dispatch({ type: "set-audiences", value: audiences });
+    setErrors((currentErrors) => clearResolvedBriefError(
+      currentErrors,
+      "audiences",
+      { ...brief, audiences },
+    ));
     setIsAudienceMenuOpen(false);
+  };
+
+  const selectFormat = (format) => {
+    dispatch({ type: "set-brief-field", field: "format", value: format });
+    setErrors((currentErrors) => clearResolvedBriefError(
+      currentErrors,
+      "format",
+      { ...brief, format },
+    ));
+    setIsFormatMenuOpen(false);
   };
 
   const submitBrief = (event) => {
@@ -93,10 +129,7 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
               {FORMAT_OPTIONS.map((format) => (
                 <button
                   key={format}
-                  onClick={() => {
-                    dispatch({ type: "set-brief-field", field: "format", value: format });
-                    setIsFormatMenuOpen(false);
-                  }}
+                  onClick={() => selectFormat(format)}
                   type="button"
                 >
                   {format}
@@ -112,14 +145,18 @@ export function BriefStep({ brief, dispatch, onAdvance }) {
         <fieldset className="writing-field">
           <legend>Who it's for</legend>
           <div className="writing-audiences">
-            {brief.audiences.map((audience) => (
-              <span className="writing-audience-chip" key={audience}>
-                {audience}
-                <button aria-label={`Remove ${audience}`} onClick={() => removeAudience(audience)} type="button">
-                  Remove
-                </button>
-              </span>
-            ))}
+            {brief.audiences.length ? (
+              brief.audiences.map((audience) => (
+                <span className="writing-audience-chip" key={audience}>
+                  {audience}
+                  <button aria-label={`Remove ${audience}`} onClick={() => removeAudience(audience)} type="button">
+                    Remove
+                  </button>
+                </span>
+              ))
+            ) : (
+              <p className="writing-helper">No audiences selected</p>
+            )}
           </div>
           <button
             aria-controls="audience-suggestions"
