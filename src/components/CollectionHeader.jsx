@@ -1,4 +1,3 @@
-import { MagnifyingGlass } from "@phosphor-icons/react";
 import { SegmentedControl, StatCard } from "@qianhui/ui";
 
 const filterItems = [
@@ -8,18 +7,9 @@ const filterItems = [
   { value: "personas", label: "Personas" },
 ];
 
-const collectionTags = [
-  "Agentic operations",
-  "Enterprise automation",
-  "Regulated workflows",
-  "DACH · UK · UAE",
-];
-
 export function CollectionHeader({
   filter,
   onFilterChange,
-  onQueryChange,
-  query,
   stats,
   visibleCount,
 }) {
@@ -33,11 +23,6 @@ export function CollectionHeader({
             A writing-ready source of truth for company narrative, ideal customer profile,
             buying committee, and role-level persona depth.
           </p>
-        </div>
-        <div className="collection-tags" aria-label="Collection themes">
-          {collectionTags.map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
         </div>
       </div>
 
@@ -60,25 +45,9 @@ export function CollectionHeader({
           value={String(stats.personas)}
           description="Role-level dossiers"
         />
-        <StatCard
-          className="collection-stat"
-          eyebrow="Evidence"
-          value="Public"
-          description={`Cutoff ${stats.researchCutoff}`}
-        />
       </div>
 
-      <div className="collection-toolbar" aria-label="Artifact search and filters">
-        <label className="artifact-search">
-          <span className="visually-hidden">Search all Otera context</span>
-          <MagnifyingGlass size={18} aria-hidden="true" />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Search roles, workflows, evidence, risks…"
-          />
-        </label>
+      <div className="collection-toolbar" aria-label="Artifact filters">
         <SegmentedControl
           ariaLabel="Filter context artifact type"
           className="artifact-filter"
