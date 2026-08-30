@@ -31,9 +31,17 @@ npm run dev
 ## Verify
 
 ```bash
-npm test
-npm run build
-npm run test:sites
+npm run verify
 ```
+
+## Deploy to Vercel
+
+Import `qianhuisunny/otera-content-lab` and use the Vite framework preset. The repository uses Vercel's conventional settings:
+
+- Build command: `npm run build`
+- Output directory: `dist`
+- Install command: `npm install` (Vercel default)
+
+No environment variables are required. `vercel.json` keeps direct links and refreshed application routes inside the single-page app.
 
 Research cutoff: 2026-08-23. Public-source synthesis; reverify time-sensitive facts before publishing.
