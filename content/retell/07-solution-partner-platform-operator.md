@@ -479,7 +479,7 @@ Do not invent statements such as “partners earn 50% margin,” “certificatio
 - No failed partner implementation, channel-conflict, client dispute, contract-loss, or exit case
 - Named cases do not disclose who owns each workspace, number, data, end-customer contract, billing, incident, or renewal
 - No independent outcome audit for ISpeedToLead, Everise, Cents, or Spare in the reviewed audience corpus
-- Public Terms may be superseded by negotiated agreements; named embedded cases do not reveal those rights
+- Under §17, public Terms control a conflict with an order form, proposal, or SLA unless the order form or SLA expressly states otherwise; named embedded cases do not reveal those rights
 
 ## Research-use rules
 

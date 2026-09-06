@@ -111,7 +111,7 @@ Public evidence is strongest at the beginning and middle of the customer journey
 | No acceptable human escalation | Exceptions can strand callers or create harm | Design transfer, callback and outage fallbacks before production |
 | Geography/destination unsupported | Calls may fail or local numbers may be unavailable | Confirm a supported carrier/SIP design before building |
 | Data residency or provider policy is incompatible | Public compliance claims do not resolve actual processing paths | Negotiate architecture and contract terms or choose an in-region alternative |
-| Regulated use prohibited by Terms or law | Current Terms prohibit AI calls to emergency lines and patient rooms and impose customer compliance duties | Narrow the workflow and obtain legal review; do not rely on product certification alone |
+| Regulated use prohibited by Terms or law | Current Terms prohibit AI calls to emergency lines and patient rooms in hospitals, healthcare facilities, or elderly homes and impose customer compliance duties | Narrow the workflow and obtain legal review; do not rely on product certification alone |
 | Buyer expects a fully managed outcome but has no implementation capacity | Self-serve ease does not remove integration, testing and operations work | Use Retell implementation services or a qualified solution partner |
 | Buyer needs a full workforce-management/CCaaS replacement | Retell is not automatically the system for every contact-center function | Integrate with or evaluate an incumbent suite |
 

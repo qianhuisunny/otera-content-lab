@@ -46,14 +46,14 @@ The [changelog](https://www.retellai.com/changelog) shows a company moving from 
 | Weijia Yu | COO | Former Meta product/technical lead; earlier voice/NLP-related work at ObEN. |
 | Zexia Zhang | CTO | Former Google engineer working on speech translation and call-analysis NLP. |
 
-The biographies above are company/founder-supplied through the [YC profile](https://www.ycombinator.com/companies/retell-ai). Treat them as credible professional summaries, not independently verified employment records.
+The [YC profile](https://www.ycombinator.com/companies/retell-ai) supports the disclosed employment summaries for Bing, Evie, Weijia, and Zexia. Todd's thin public background record and Evie's involvement in launch positioning and customer narrative are findings from the broader founder corpus and research synthesis, not YC claims. Treat all professional summaries as public, primarily company/founder-supplied evidence rather than independently verified employment records.
 
 ## Funding and financial reality
 
 ### Funding
 
-- Retell announced a **$4.6M seed** led by Alt Capital, with Y Combinator, Carya Venture, and more than 20 operators and angels. [Official announcement](https://www.retellai.com/blog/seed-announcement); [TechCrunch corroboration](https://techcrunch.com/2024/05/09/retell-ai-lets-companies-build-agents-to-answer-their-calls/).
-- Some databases and founder wording place total funding around **$5M–$5.1M**. The additional amount is not transparently documented.
+- Retell announced a **$4.6M seed** led by Alt Capital, with Y Combinator, Carya Venture, and more than 20 founders, executives, and operators. [Official announcement](https://www.retellai.com/blog/seed-announcement); [TechCrunch approximate-capital report](https://techcrunch.com/2024/05/09/retell-ai-lets-companies-build-agents-to-answer-their-calls/).
+- TechCrunch independently reported approximately **$4.53M in total capital** and mentioned YC; it did not corroborate every term in Retell's $4.6M seed announcement.
 - Founder ownership, investor percentages, voting control, board composition, and option pool are **undisclosed**.
 
 ### Revenue, profitability, and valuation
@@ -63,7 +63,10 @@ Public statements form a dated sequence but do not reconcile cleanly:
 - 2024 company claim: more than $3M annualized revenue shortly after launch
 - 2025 partner story: $14M revenue within 16 months
 - November 2025 company milestone: $40M annualized revenue, fully profitable, 25 people
-- 2026 founder/company statements: roughly $60M ARR and profitability
+- [2026-01-29 Retell release](https://www.globenewswire.com/news-release/2026/01/29/3228780/0/en/Upgraded-Retell-AI-Voice-Platform-Enables-Corporate-Call-Centers-to-Deploy-Infinite-AI-Sales-and-Support-Agents-Across-Voice-Chat-Email-and-SMS-Company-Revenue-Now-Exceeds-40M-ARR.html): $40M ARR and more than 40M calls per month
+- [2026-05-07 Retell company post](https://www.linkedin.com/posts/retellai_retell-crossed-60m-arr-and-is-now-emerging-activity-7458171277539717120-3jx2): $60M ARR and 35 people
+- [2026-05-13 Bing Wu interview](https://cxfoundation.com/video/retell-ai-bing-wu-interview): roughly $55M, reversing the apparent public sequence six days later
+- [2026-06-25 Bing Wu post](https://www.linkedin.com/posts/bingw_how-we-scaled-retell-to-60m-arr-with-5m-activity-7475972748654284800-NllO): roughly $60M ARR, about 50 people, and profitability
 - Current YC recruiting claim accessed 2026-09-06: $80M ARR, 50 people, valued above $1.5B
 - Stale text on that same recruiting page: $35M ARR, $4.7M seed, 24 people
 
@@ -118,11 +121,11 @@ The [custom telephony layer](https://docs.retellai.com/deploy/custom-telephony) 
 ### Reliability and security posture
 
 - Retell docs claim **>99.9% uptime** and describe autoscaling, monitoring, provider fallbacks, and a delayed-rollout enterprise stable server.
-- Public [Terms](https://www.retellai.com/legal/terms-of-service) promise commercially reasonable efforts toward only **99.5% uptime**, unless another SLA overrides them.
+- Public [Terms](https://www.retellai.com/legal/terms-of-service) require commercially reasonable efforts to maintain at least **99.5% uptime**, excluding scheduled maintenance of up to six hours per month and force majeure. Under §17, the Terms control a conflict with an order form, proposal, or SLA unless the order form or SLA expressly states otherwise.
 - At the cutoff, the [status page](https://status.retellai.com/) reported trailing-90-day phone uptime of 99.94% and end-to-end calling of 99.95%; a calling disruption occurred on 2026-09-05.
 - Retell claims SOC 2 Type I/II, GDPR alignment, and HIPAA support when a BAA is signed. The underlying audit reports were not reviewed. [Compliance docs](https://docs.retellai.com/general/compliance).
 - Per-agent retention can be 1–730 days or indefinite; **indefinite is the default**. Recordings, transcripts, logs, and variables are deleted after a configured window, while some basic metadata may remain. [Retention docs](https://docs.retellai.com/accounts/data-retention).
-- The current [Terms](https://www.retellai.com/legal/terms-of-service), updated 2026-06-01, grant Retell permission when recording is not opted out to use de-identified and aggregated Communications and User Content for analytics and for developing, training, and improving AI/ML models included in the service. This supersedes an older support answer saying calls were not used for training. Any narrower data-use commitment must be confirmed in the buyer’s actual DPA, order form, or other written agreement.
+- The current [Terms](https://www.retellai.com/legal/terms-of-service), updated 2026-06-01, grant Retell permission when recording is not opted out to use Communications and User Content for analytics and for developing, training, and improving AI/ML models included in the service, after the data is de-identified and aggregated. This current standard-contract language conflicts with an older support answer and is the public contractual baseline. Any narrower data-use commitment must be confirmed in the buyer’s actual DPA, order form, or other written agreement.
 
 Do not turn vendor certification language into a blanket statement that every customer deployment is compliant. Architecture, model providers, consent, configuration, and contracts determine the actual posture.
 
@@ -159,7 +162,7 @@ Retell’s [customer index](https://www.retellai.com/customers) claims 3,000+ bu
 | Spare Labs | ~30% of calls automated in week one, ~70% average resolution, up to 100% for simpler operations, ~1 month initial integration | [Named COO in vendor-hosted case](https://www.retellai.com/case-study/how-sparelabs-put-ai-voice-on-the-front-line-of-public-transit-and-watched-it-take-off); medium confidence. |
 | Medical Data Systems | 30,000 calls/month, ~70% containment, ~$280,000 monthly collections | [Named CIO in vendor-hosted case](https://www.retellai.com/case-study/how-medical-data-systems-scales-280-000-in-monthly-collections-with-ai-voice-agents-on-retell); medium confidence. |
 | Pine Park Health | 2.1 FTE of capacity returned; appointments on 55.7% of connected proactive calls | [Healthcare IT News](https://www.healthcareitnews.com/news/pine-park-health-sees-roi-ai-scheduling-tool) with named customer executive; relatively strong corroboration. |
-| Everise | 65% internal-ticket containment and 600 staff-hours/month saved | [Retell-hosted case](https://www.retellai.com/case-study/how-everise-contained-65-of-internal-service-desk-tickets-with-retell-ai); no raw measurement reviewed. |
+| Everise | Named executive says 65% of voice calls contained; 600 staff-hours/month saved | [Retell-hosted case](https://www.retellai.com/case-study/how-everise-contained-65-of-internal-service-desk-tickets-with-retell-ai); title/card says tickets while the quote says voice calls, and no raw measurement was reviewed. |
 | SWTCH | More than 50% support-cost reduction | Customer-attributed quote in a [Retell-issued press release](https://www.globenewswire.com/news-release/2026/01/29/3228780/0/en/Upgraded-Retell-AI-Voice-Platform-Enables-Corporate-Call-Centers-to-Deploy-Infinite-AI-Sales-and-Support-Agents-Across-Voice-Chat-Email-and-SMS-Company-Revenue-Now-Exceeds-40M-ARR.html); not independently audited. |
 
 These examples establish that Retell reaches production. They do not establish an average customer result, causal effect, retention, or total cost.
@@ -232,9 +235,9 @@ Team-size evidence changes quickly. The best current public estimate is approxim
 
 ### Legal and trust risks
 
-Retell’s [Terms](https://www.retellai.com/legal/terms-of-service) place significant responsibility on the customer for TCPA, TSR, FCC, Do-Not-Call, consent, recording, and AI disclosure compliance. PHI requires a BAA; payment-card and biometric data are restricted; emergency and safety-critical uses are excluded. AI outputs may be inaccurate.
+Retell’s [Terms](https://www.retellai.com/legal/terms-of-service) place significant responsibility on the customer for TCPA, TSR, FCC, Do-Not-Call, consent, recording, and AI disclosure compliance. PHI requires a BAA; payment-card and biometric data are restricted. Section 4.2 prohibits autodial, AI voice, or prerecorded-message calls to enumerated emergency lines, patient rooms in hospitals, healthcare facilities, or elderly homes, and paging services. Separately, §8 says the service is not designed for medical, emergency, aviation, nuclear, or other inherently dangerous or safety-critical environments and disclaims liability for those uses. AI outputs may be inaccurate.
 
-The same Terms permit model development/training use of recorded Communications and User Content after de-identification and aggregation unless recording is opted out. This is a material procurement issue, especially for regulated or confidential calls; do not repeat the older blanket claim that customer calls are never used for training.
+The same Terms permit model development/training use of recorded Communications and User Content after de-identification and aggregation unless recording is opted out. This is a material procurement issue, especially for regulated or confidential calls; do not imply a blanket no-training commitment without verifying the buyer's actual written agreement.
 
 Global language and calling capability does not equal local legal readiness. Validate consent, disclosure, number registration, recording law, and data location by country and state.
 
@@ -255,7 +258,7 @@ Retell is becoming an AI-native contact-center operations platform, not staying 
 
 Internationally, Retell sells through multilingual models, supported international destinations, SIP/custom telephony, CCaaS connections, and solution partners. [Retell-managed numbers support 15 outbound countries](https://docs.retellai.com/deploy/outbound-call); imported-number reach depends on the carrier. Language quality and feature support depend on the ASR/TTS/model combination.
 
-At the cutoff, official material still indicated US-only infrastructure/no EU operation, with support identifying AWS `us-west-2` as the sole data region. That matters for EU procurement even when a DPA/SCC is available. Re-verify before any claim about EU hosting.
+At the cutoff, official [compliance documentation](https://docs.retellai.com/general/compliance) still said Retell did not operate services within the EU, while a dated [staff support answer](https://community.retellai.com/t/request-for-clarification-on-data-residency-regional-hosting-and-enterprise-plan/2424) identified AWS `us-west-2` as the sole hosted data region and said a different region was not configurable. That point-in-time support statement is not contract language. It matters for EU procurement even when a DPA/SCC is available, and must be re-verified before any claim about current hosting.
 
 ## Working thesis for writing
 

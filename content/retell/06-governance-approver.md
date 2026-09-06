@@ -45,7 +45,7 @@ The role is strongly supported as a **decision function**, but public Retell cas
 - Retell's [data-retention documentation](https://docs.retellai.com/accounts/data-retention) says retention can be configured from 1 to 730 days or left indefinite, with indefinite as the public default; recordings, transcripts, logs, and variables follow the configured window while some basic metadata may remain. This is a mutable product setting and must be checked against the contract and actual agent configuration.
 - Retell's [compliance page](https://docs.retellai.com/general/compliance) claims SOC 2 Type I and II, GDPR support through a DPA/SCC posture, and HIPAA support when a BAA is signed. The underlying audit reports and customer contract were not reviewed. The same documentation says Retell does not currently operate services in the EU.
 - Retell's [privacy policy](https://www.retellai.com/legal/privacy-policy), updated 2026-07-20, says personal information is primarily stored and processed in the United States. A DPA or SCC transfer mechanism is not physical EU residency.
-- Retell's public [Terms of Service](https://www.retellai.com/legal/terms-of-service), effective 2026-06-01, place material calling, consent, disclosure, recording, content, and legal-compliance duties on the customer. PHI requires an executed BAA; payment-card and biometric data are restricted absent applicable authorization; emergency lines and patient rooms are prohibited destinations; and the service may produce unintended or erroneous output.
+- Retell's public [Terms of Service](https://www.retellai.com/legal/terms-of-service), effective 2026-06-01, place material calling, consent, disclosure, recording, content, and legal-compliance duties on the customer. PHI requires an executed BAA; payment-card and biometric data are restricted absent applicable authorization; emergency lines and patient rooms in hospitals, healthcare facilities, or elderly homes are prohibited destinations; and the service may produce unintended or erroneous output.
 - Under those public Terms, if the customer does not opt out of recording, Retell receives permission to process Communications and User Content for AI-powered analytics and for development, training, and improvement of service models after de-identification and aggregation. A buyer requiring narrower use should obtain it in writing rather than rely on an older support answer or an assumed “no training” posture.
 - Retell's current [agent handbook](https://docs.retellai.com/build/agent-handbook) describes configurable disclosure and scope-boundary behavior. Public defaults and customer configuration may not satisfy every law or policy; the customer remains responsible for the final agent.
 
@@ -445,7 +445,7 @@ Do not invent a governance approver saying “I will never approve AI” or “S
 - No complete public feature-level provider/subprocessor/data-routing map
 - No authoritative date for an EU service-region roadmap
 - No public Retell-specific enforcement case was identified; absence is not proof of compliance
-- Public Terms may be superseded by signed customer agreements that were unavailable
+- Under §17, public Terms control a conflict with an order form, proposal, or SLA unless the order form or SLA expressly states otherwise; signed customer agreements were unavailable
 
 ## Research-use rules
 

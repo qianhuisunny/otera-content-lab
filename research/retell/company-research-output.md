@@ -42,11 +42,11 @@ YC lists five active founders; the current About page lists the same five as the
 | Weijia Yu | Co-founder and COO | Meta product/technical leadership; earlier app development at AI company ObEN across TTS, computer vision, and chatbots. |
 | Zexia Zhang | Co-founder and CTO | Four years at Google working on speech translation and NLP for call analysis. |
 
-These biographies come from the [YC profile](https://www.ycombinator.com/companies/retell-ai), so they are founder-supplied and should not be treated as independently verified employment records.
+The [YC profile](https://www.ycombinator.com/companies/retell-ai) supports the disclosed employment summaries for Bing, Evie, Weijia, and Zexia. Todd's thin public background record and Evie's launch/positioning involvement are findings from the broader founder corpus and research synthesis, not YC claims. Treat all professional summaries as public, primarily company/founder-supplied evidence rather than independently verified employment records.
 
 ### Early funding, customers, and product iterations
 
-Retell announced a **$4.6M seed round** led by Alt Capital, with Y Combinator, Carya Venture, and more than 20 operators and founders. Named angels include Aaron Levie, Michael Seibel, Siqi Chen, Rajat Suri, Alex Levin, and Tyler Bosmeny. The amount and financing were also reported by [TechCrunch](https://techcrunch.com/2024/05/09/retell-ai-lets-companies-build-agents-to-answer-their-calls/), although public sources disagree about the exact closing/announcement date. CB Insights counts about $5.1M across two rounds, while Retell has repeatedly described $4.6M–$5M total raised; the extra roughly $500k is not transparently documented.
+Retell announced a **$4.6M seed round** led by Alt Capital, with Y Combinator, Carya Venture, and more than 20 founders, executives, and operators. Named angels include Aaron Levie, Michael Seibel, Siqi Chen, Rajat Suri, Alex Levin, and Tyler Bosmeny. [TechCrunch](https://techcrunch.com/2024/05/09/retell-ai-lets-companies-build-agents-to-answer-their-calls/) separately reported approximately $4.53M in total capital and mentioned YC, but it did not corroborate every round term.
 
 The 2024 reporting described hundreds of customers, including BPOs, high-call-volume SMBs, and telehealth company Ro. Launch materials showed a BYO-LLM API, dashboard, and phone integration. The company then changed direction quickly:
 
@@ -89,7 +89,7 @@ The most plausible inference is rapid sequential growth combined with stale copy
 ### Funding, ownership, valuation, and investor expectations
 
 - Verified disclosed financing: $4.6M seed led by Alt Capital, plus YC, Carya, and angels.
-- Probable total capital: roughly $4.6M–$5.1M, depending on whether a small earlier round is included.
+- Independently reported capital: approximately $4.53M in TechCrunch; no additional round was transparently verified in the reviewed source set.
 - Founder ownership, investor percentages, voting control, board structure, and option pool are **undisclosed**.
 - No public priced financing was found that verifies a post-money valuation. The “over $1.5B” figure is a current company recruiting statement and must be labeled **unverified**.
 - Explicit investor return or growth expectations are **unavailable**. The investor roster and company messaging suggest an expectation of category leadership and unusually capital-efficient growth, but that is researcher inference, not a disclosed mandate.
@@ -123,7 +123,7 @@ Customers can let Retell host response generation through prompt/flow agents or 
 
 Telephony can be Retell-managed or connected through Twilio, Telnyx, Vonage, and other SIP infrastructure. The [custom telephony guide](https://docs.retellai.com/deploy/custom-telephony) supports TCP/UDP/TLS, optional mTLS, SRTP media encryption, imported numbers, and CCaaS connections. Some modes trade control for feature loss: dial-to-SIP cannot use Retell’s native transfer because Retell does not control the number/provider.
 
-Reliability is layered rather than absolute. Retell documents autoscaling, provider fallbacks, 24/7 monitoring, and a delayed-rollout “stable server” for enterprise customers. Its docs claim >99.9% uptime, while public terms commit only to commercially reasonable efforts toward **99.5%**, absent a separate SLA. At the cutoff, the [status page](https://status.retellai.com/) showed trailing-90-day phone uptime of 99.94% and end-to-end calling of 99.95%, including a call disruption on 2026-09-05.
+Reliability is layered rather than absolute. Retell documents autoscaling, provider fallbacks, 24/7 monitoring, and a delayed-rollout “stable server” for enterprise customers. Its docs claim >99.9% uptime, while public Terms require commercially reasonable efforts to maintain at least **99.5%**, excluding scheduled maintenance of up to six hours per month and force majeure. Under §17, the Terms control a conflict with an order form, proposal, or SLA unless the order form or SLA expressly states otherwise. At the cutoff, the [status page](https://status.retellai.com/) showed trailing-90-day phone uptime of 99.94% and end-to-end calling of 99.95%, including a call disruption on 2026-09-05.
 
 ### Features that matter to users
 
@@ -280,7 +280,7 @@ Retell sits inside several live controversies even without a known Retell-specif
 - **Data handling:** calls can include health, payment, identity, and biometric-like voice data. Contracts shift substantial compliance responsibility to customers.
 - **Human disclosure and dignity:** making an agent sound indistinguishable from a person may conflict with user expectations and emerging disclosure rules.
 
-Retell’s [2026 Terms](https://www.retellai.com/legal/terms-of-service) require customer compliance with TCPA, TSR, FCC, DNC, AI disclosure, call-recording, consent, and related rules. PHI requires a BAA; payment-card and biometric data are restricted absent authorization; emergency, 911, hospital-room, and other safety-critical use is excluded. The terms warn that AI output can be erroneous and the service may not be uninterrupted or error-free.
+Retell’s [2026 Terms](https://www.retellai.com/legal/terms-of-service) require customer compliance with TCPA, TSR, FCC, DNC, AI disclosure, call-recording, consent, and related rules. PHI requires a BAA, and payment-card and biometric data are restricted absent authorization. Section 4.2 separately prohibits autodialed, AI-voice, or prerecorded-message calls to enumerated emergency lines, patient rooms in hospitals, healthcare facilities, and elderly homes, and paging services. Section 8 warns that the service is not designed for high-risk contexts such as emergency response or medical decision-making, disclaims suitability and liability there, and also warns that AI output can be erroneous and the service may not be uninterrupted or error-free.
 
 ### Failed products or initiatives
 
@@ -295,7 +295,7 @@ No clearly documented failed standalone product was found. The January 2024 API 
 - Changelog migrations and frequent model changes create maintenance load for production agents.
 - Custom LLM and custom telephony paths provide control but remove some Retell-native capabilities and shift reliability to the customer.
 - Retention is indefinite by default unless configured; regulated customers must actively set storage and deletion policy.
-- The current [Terms](https://www.retellai.com/legal/terms-of-service), updated 2026-06-01, grant Retell permission when recording is not opted out to process Communications and User Content for AI-powered analytics and for developing, training, and improving AI/ML models included in the service, after de-identification and aggregation. The same Terms also permit use of aggregated, de-identified service-use data to operate, improve, and develop the service. This current contractual language supersedes the earlier May 2026 support statement that customer calls were not used for training. Buyers should treat the Terms as controlling public evidence and obtain any narrower negotiated restriction in writing.
+- The current [Terms](https://www.retellai.com/legal/terms-of-service), updated 2026-06-01, grant Retell permission when recording is not opted out to process Communications and User Content for AI-powered analytics and for developing, training, and improving AI/ML models included in the service, after de-identification and aggregation. The same Terms also permit use of aggregated, de-identified service-use data to operate, improve, and develop the service. This current standard-contract language conflicts with the earlier May 2026 support statement and is the public contractual baseline. Buyers should obtain any narrower negotiated restriction in writing.
 
 ## 8. Recent Context
 
