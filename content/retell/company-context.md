@@ -122,6 +122,7 @@ The [custom telephony layer](https://docs.retellai.com/deploy/custom-telephony) 
 - At the cutoff, the [status page](https://status.retellai.com/) reported trailing-90-day phone uptime of 99.94% and end-to-end calling of 99.95%; a calling disruption occurred on 2026-09-05.
 - Retell claims SOC 2 Type I/II, GDPR alignment, and HIPAA support when a BAA is signed. The underlying audit reports were not reviewed. [Compliance docs](https://docs.retellai.com/general/compliance).
 - Per-agent retention can be 1–730 days or indefinite; **indefinite is the default**. Recordings, transcripts, logs, and variables are deleted after a configured window, while some basic metadata may remain. [Retention docs](https://docs.retellai.com/accounts/data-retention).
+- The current [Terms](https://www.retellai.com/legal/terms-of-service), updated 2026-06-01, grant Retell permission when recording is not opted out to use de-identified and aggregated Communications and User Content for analytics and for developing, training, and improving AI/ML models included in the service. This supersedes an older support answer saying calls were not used for training. Any narrower data-use commitment must be confirmed in the buyer’s actual DPA, order form, or other written agreement.
 
 Do not turn vendor certification language into a blanket statement that every customer deployment is compliant. Architecture, model providers, consent, configuration, and contracts determine the actual posture.
 
@@ -158,8 +159,8 @@ Retell’s [customer index](https://www.retellai.com/customers) claims 3,000+ bu
 | Spare Labs | ~30% of calls automated in week one, ~70% average resolution, up to 100% for simpler operations, ~1 month initial integration | [Named COO in vendor-hosted case](https://www.retellai.com/case-study/how-sparelabs-put-ai-voice-on-the-front-line-of-public-transit-and-watched-it-take-off); medium confidence. |
 | Medical Data Systems | 30,000 calls/month, ~70% containment, ~$280,000 monthly collections | [Named CIO in vendor-hosted case](https://www.retellai.com/case-study/how-medical-data-systems-scales-280-000-in-monthly-collections-with-ai-voice-agents-on-retell); medium confidence. |
 | Pine Park Health | 2.1 FTE of capacity returned; appointments on 55.7% of connected proactive calls | [Healthcare IT News](https://www.healthcareitnews.com/news/pine-park-health-sees-roi-ai-scheduling-tool) with named customer executive; relatively strong corroboration. |
-| Everise | 65% internal-ticket containment and 600 staff-hours/month saved | Vendor-hosted case; no raw measurement reviewed. |
-| SWTCH | More than 50% support-cost reduction | Customer-attributed quote in Retell-issued press release; not independently audited. |
+| Everise | 65% internal-ticket containment and 600 staff-hours/month saved | [Retell-hosted case](https://www.retellai.com/case-study/how-everise-contained-65-of-internal-service-desk-tickets-with-retell-ai); no raw measurement reviewed. |
+| SWTCH | More than 50% support-cost reduction | Customer-attributed quote in a [Retell-issued press release](https://www.globenewswire.com/news-release/2026/01/29/3228780/0/en/Upgraded-Retell-AI-Voice-Platform-Enables-Corporate-Call-Centers-to-Deploy-Infinite-AI-Sales-and-Support-Agents-Across-Voice-Chat-Email-and-SMS-Company-Revenue-Now-Exceeds-40M-ARR.html); not independently audited. |
 
 These examples establish that Retell reaches production. They do not establish an average customer result, causal effect, retention, or total cost.
 
@@ -214,7 +215,7 @@ The company remains founder-led. Its [careers page](https://www.retellai.com/car
 
 This is employer-authored culture positioning. Representative employee-review data is unavailable. Candidate complaints about interview cancellations are anonymous and insufficient to infer employee culture.
 
-Team-size evidence changes quickly. The best current public estimate is approximately 50 employees, but recent first-party pages also contain 24, 25, and 35. Always attach an as-of date.
+Team-size evidence changes quickly. The best current public estimate is approximately 50 employees, but recent first-party pages also contain 24, 25, and a [35-person snapshot](https://www.linkedin.com/posts/retellai_retell-crossed-60m-arr-and-is-now-emerging-activity-7458171277539717120-3jx2). Always attach an as-of date.
 
 ## Problems and open questions
 
@@ -232,6 +233,8 @@ Team-size evidence changes quickly. The best current public estimate is approxim
 ### Legal and trust risks
 
 Retell’s [Terms](https://www.retellai.com/legal/terms-of-service) place significant responsibility on the customer for TCPA, TSR, FCC, Do-Not-Call, consent, recording, and AI disclosure compliance. PHI requires a BAA; payment-card and biometric data are restricted; emergency and safety-critical uses are excluded. AI outputs may be inaccurate.
+
+The same Terms permit model development/training use of recorded Communications and User Content after de-identification and aggregation unless recording is opted out. This is a material procurement issue, especially for regulated or confidential calls; do not repeat the older blanket claim that customer calls are never used for training.
 
 Global language and calling capability does not equal local legal readiness. Validate consent, disclosure, number registration, recording law, and data location by country and state.
 

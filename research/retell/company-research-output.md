@@ -206,8 +206,8 @@ The practical customer roles visible in evidence include CIO/technical leadershi
 | Spare Labs | Inbound/outbound public-transit rider calls | Around 30% automated in week one; ~70% average resolution; up to 100% at simpler deployments; initial integration about one month | [Retell-hosted case](https://www.retellai.com/case-study/how-sparelabs-put-ai-voice-on-the-front-line-of-public-transit-and-watched-it-take-off) quoting COO Josh Andrews; selected, unaudited. |
 | Medical Data Systems | Inbound patient billing and outbound healthcare collections | 30,000 calls/month, ~70% containment, about $280,000 collected monthly | [Retell-hosted case](https://www.retellai.com/case-study/how-medical-data-systems-scales-280-000-in-monthly-collections-with-ai-voice-agents-on-retell) quoting CIO Linda Harvard; selected, unaudited. |
 | Pine Park Health | Proactive and inbound scheduling | 2.1 FTE capacity returned to assistants and appointments booked on 55.7% of connected proactive calls | [Healthcare IT News](https://www.healthcareitnews.com/news/pine-park-health-sees-roi-ai-scheduling-tool), 2026-02-06, with named customer executive; strongest independent customer corroboration reviewed. |
-| Everise | Internal service desk | Vendor case claims 65% containment, 600 staff-hours saved/month, and elimination of 5–6 minute waits | Retell-hosted case; no raw or independent measurement inspected. |
-| SWTCH | EV charging support | Customer quote in Retell release claims support cost cut by more than half | Vendor-issued press release; customer-attributed but not independently audited. |
+| Everise | Internal service desk | Vendor case claims 65% containment, 600 staff-hours saved/month, and elimination of 5–6 minute waits | [Retell-hosted case](https://www.retellai.com/case-study/how-everise-contained-65-of-internal-service-desk-tickets-with-retell-ai); no raw or independent measurement inspected. |
+| SWTCH | EV charging support | Customer quote in Retell release claims support cost cut by more than half | [Retell-issued January 2026 release](https://www.globenewswire.com/news-release/2026/01/29/3228780/0/en/Upgraded-Retell-AI-Voice-Platform-Enables-Corporate-Call-Centers-to-Deploy-Infinite-AI-Sales-and-Support-Agents-Across-Voice-Chat-Email-and-SMS-Company-Revenue-Now-Exceeds-40M-ARR.html); customer-attributed but not independently audited. |
 
 The [OpenAI customer story](https://openai.com/index/retell-ai/) also reports up to 80% call-cost reduction, 85%+ CSAT, and 85–90% qualified-transfer success across selected deployments. These are co-marketing figures, not a representative Retell cohort.
 
@@ -224,7 +224,7 @@ The [G2 review page](https://www.g2.com/products/retell-ai/reviews) showed a ver
 
 Review evidence needs caution. G2’s count changed during the research window, some reviews were incentivized, and its thematic summary is machine-generated. A sparse Trustpilot complaint about support/payment cannot be generalized. Hacker News launch comments were technically useful but represent early demos, not the 2026 product.
 
-First-party operational records add more concrete issues. Retell’s changelog documents transfer failures, duplicate tool actions, call-screening misclassification, provider outages/fallback work, and billing-transparency changes. Official support threads report individual billing discrepancies, prepaid-balance interruption, number charges, and credential-abuse incidents. These show genuine operational friction but not prevalence.
+First-party operational records add more concrete issues. Retell’s changelog documents transfer failures, duplicate tool actions, call-screening misclassification, provider outages/fallback work, and billing-transparency changes. Official support threads document one [billing-display discrepancy](https://community.retellai.com/t/some-thing-strange-with-my-account-billing/2073), an [unexpected prepaid-balance interruption](https://community.retellai.com/t/error-credit-balance-exhausted-please-top-up-to-continue/3254), an [extra phone-number charge](https://community.retellai.com/t/extra-phone-number-charge/751), and a [customer credential-abuse incident](https://community.retellai.com/t/critical-issue/2313). These show genuine operational friction but not prevalence; the credential incident indicates misuse of a customer API key, not a demonstrated Retell platform breach.
 
 ### Retention and satisfaction
 
@@ -261,7 +261,7 @@ This is **employer positioning**, not employee testimony. Public employee-review
 The safest current statement is **approximately 50 people, with aggressive hiring**, based on YC’s live company metadata and a recent founder post. However:
 
 - About page milestone: 25 people in November 2025
-- A later company post: 35 people at $60M ARR
+- A later [company post](https://www.linkedin.com/posts/retellai_retell-crossed-60m-arr-and-is-now-emerging-activity-7458171277539717120-3jx2): 35 people at $60M ARR
 - Current founder post/YC metadata: around 50 people
 - Stale text on the same YC job page: 24 people
 
@@ -295,7 +295,7 @@ No clearly documented failed standalone product was found. The January 2024 API 
 - Changelog migrations and frequent model changes create maintenance load for production agents.
 - Custom LLM and custom telephony paths provide control but remove some Retell-native capabilities and shift reliability to the customer.
 - Retention is indefinite by default unless configured; regulated customers must actively set storage and deletion policy.
-- Official materials require clarification on data use: a support response says customer calls are not used for model training, while Workflows marketing refers to learning from aggregate call data. This may mean de-identified operational telemetry rather than training on customer content, but that is an inference and must be re-verified contractually.
+- The current [Terms](https://www.retellai.com/legal/terms-of-service), updated 2026-06-01, grant Retell permission when recording is not opted out to process Communications and User Content for AI-powered analytics and for developing, training, and improving AI/ML models included in the service, after de-identification and aggregation. The same Terms also permit use of aggregated, de-identified service-use data to operate, improve, and develop the service. This current contractual language supersedes the earlier May 2026 support statement that customer calls were not used for training. Buyers should treat the Terms as controlling public evidence and obtain any narrower negotiated restriction in writing.
 
 ## 8. Recent Context
 
