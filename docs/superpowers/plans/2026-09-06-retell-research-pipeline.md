@@ -364,10 +364,10 @@ rg -n 'https?://' research/retell/claim-ledger.md
 rg -n 'low|medium|high' research/retell/claim-ledger.md
 rg -n 'standalone' research/retell/persona-decisions.md
 git diff --check
-git diff --exit-code HEAD -- content/otera
+git diff --exit-code a70aa89..HEAD -- content/otera
 ```
 
-Expected: reconciled report and ledger are nonempty; every consequential claim has a direct URL and confidence; at least one evidence-supported standalone persona exists; Otera remains untouched.
+Expected: reconciled report and ledger are nonempty; every consequential claim has a direct URL and confidence; at least one evidence-supported standalone persona exists; Otera remains byte-for-byte unchanged from the research branch point.
 
 - [ ] **Step 6: Commit**
 
