@@ -25,3 +25,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Keep the collection hero free of theme chips, the Evidence summary stat, and full-text search. Keep the top bar free of artifact counts and bulk expand/collapse controls unless the user explicitly asks to restore them.
 - Keep the desktop sidebar at `16rem`. Its primary navigation contains exactly two text-only view tabs, `Context` and `Workflow`; retain the OT identity avatar, local-snapshot status dot, and top-bar Content Lab icon.
 - The Workflow view uses the exact content from `/Users/qianhuisun/Desktop/Screenshot 2026-08-25 at 12.36.50 PM.png` and composes registered `IconGridSection` / `IconTile` styles. Do not recreate its tinted bands or add unregistered workflow-card chrome.
+
+## Multi-company research constraints
+
+- Preserve Otera as a separately selectable company when adding Retell.ai; never replace or rewrite the Otera Markdown artifacts for this expansion.
+- Keep company selection separate from the primary Context/Workflow view navigation and build it from the registered `SegmentedControl` component.
+- Derive Retell persona count and boundaries from ICP and buying-committee evidence. Do not force Retell into Otera's seven-persona structure.
