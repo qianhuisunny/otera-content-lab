@@ -1,47 +1,36 @@
 import { useMemo, useState } from "react";
 import { Stack, Target } from "@phosphor-icons/react";
-import { Button } from "@qianhui/ui";
+import { Button, SegmentedControl } from "@qianhui/ui";
 import { AppSidebar } from "./components/AppSidebar";
 import { ArtifactGrid } from "./components/ArtifactGrid";
 import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
 import { filterArtifacts } from "./data/artifactUtils";
-import { COLLECTION_STATS, OTERA_ARTIFACTS } from "./data/oteraArtifacts";
+import { COMPANY_CATALOG, DEFAULT_COMPANY_ID } from "./data/companyCatalog";
 
-const sectionDefinitions = [
-  {
-    id: "company",
-    title: "Company & market",
-    description: "What Otera is, where it fits, who should buy, and what should disqualify an opportunity.",
-    artifactIds: ["company-overview", "icp-context"],
-  },
-  {
-    id: "personas",
-    title: "Audience & buying committee",
-    description: "The committee map plus seven role-level dossiers with jobs, incentives, objections, evidence needs, and messaging guidance.",
-    artifactIds: [
-      "persona-index",
-      "economic-buyer",
-      "executive-champion",
-      "functional-champion",
-      "technical-evaluator",
-      "risk-approval-gate",
-      "operational-user",
-      "transformation-partner",
-    ],
-  },
-];
+const companySwitcherItems = COMPANY_CATALOG.map(({ id, name }) => ({
+  value: id,
+  label: name,
+}));
 
 export function App() {
+  const [activeCompanyId, setActiveCompanyId] = useState(DEFAULT_COMPANY_ID);
   const [activeView, setActiveView] = useState("context");
   const [filter, setFilter] = useState("all");
   const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const company = COMPANY_CATALOG.find(({ id }) => id === activeCompanyId) ?? COMPANY_CATALOG[0];
 
   const visibleArtifacts = useMemo(
-    () => filterArtifacts(OTERA_ARTIFACTS, "", filter),
-    [filter],
+    () => filterArtifacts(company.artifacts, "", filter),
+    [company, filter],
   );
+
+  const handleCompanyChange = (nextCompanyId) => {
+    setActiveCompanyId(nextCompanyId);
+    setFilter("all");
+    setExpandedIds(new Set());
+  };
 
   const toggleArtifact = (id) => {
     setExpandedIds((current) => {
@@ -67,15 +56,22 @@ export function App() {
           </span>
           <strong>Content Lab</strong>
           <span aria-hidden="true">/</span>
-          <span>Otera context library</span>
+          <span>{company.topbarLabel}</span>
         </div>
+        <SegmentedControl
+          ariaLabel="Select company context"
+          className="company-switcher"
+          items={companySwitcherItems}
+          value={activeCompanyId}
+          onValueChange={handleCompanyChange}
+        />
       </header>
 
       <div className="app-shell">
         <AppSidebar
           activeView={activeView}
+          company={company}
           onViewChange={setActiveView}
-          researchCutoff={COLLECTION_STATS.researchCutoff}
         />
 
         <main className="content-library" id="content-library" tabIndex={-1}>
@@ -89,14 +85,15 @@ export function App() {
             ) : (
               <>
                 <CollectionHeader
+                  company={company}
                   filter={filter}
                   onFilterChange={setFilter}
-                  stats={COLLECTION_STATS}
+                  stats={company.stats}
                   visibleCount={visibleArtifacts.length}
                 />
                 {visibleArtifacts.length ? (
                   <div className="artifact-sections">
-                    {sectionDefinitions.map((section) => (
+                    {company.sections.map((section) => (
                       <ArtifactGrid
                         {...section}
                         artifacts={visibleArtifacts.filter((artifact) =>
@@ -118,7 +115,7 @@ export function App() {
                     </Button>
                   </section>
                 )}
-                <EvidencePanel researchCutoff={COLLECTION_STATS.researchCutoff} />
+                <EvidencePanel company={company} />
               </>
             )}
           </div>

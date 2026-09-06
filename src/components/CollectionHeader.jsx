@@ -2,12 +2,13 @@ import { SegmentedControl, StatCard } from "@qianhui/ui";
 
 const filterItems = [
   { value: "all", label: "All" },
-  { value: "company_context", label: "Company" },
+  { value: "company", label: "Company" },
   { value: "icp_context", label: "ICP" },
   { value: "personas", label: "Personas" },
 ];
 
 export function CollectionHeader({
+  company,
   filter,
   onFilterChange,
   stats,
@@ -18,11 +19,8 @@ export function CollectionHeader({
       <div className="collection-heading">
         <div>
           <p className="section-kicker">Company research library</p>
-          <h1>Otera context artifacts</h1>
-          <p className="collection-intro">
-            A writing-ready source of truth for company narrative, ideal customer profile,
-            buying committee, and role-level persona depth.
-          </p>
+          <h1>{company.collectionTitle}</h1>
+          <p className="collection-intro">{company.collectionIntro}</p>
         </div>
       </div>
 

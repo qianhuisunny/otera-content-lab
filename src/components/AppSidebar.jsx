@@ -20,7 +20,7 @@ export function getNextViewIndex(key, index) {
   return null;
 }
 
-export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
+export function AppSidebar({ activeView, company, onViewChange }) {
   const tabRefs = useRef([]);
 
   const handleTabKeyDown = (event, index) => {
@@ -33,14 +33,14 @@ export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
   };
 
   return (
-    <aside className="app-sidebar" aria-label="Otera content navigation">
+    <aside className="app-sidebar" aria-label={`${company.name} content navigation`}>
       <div className="workspace-identity">
         <span className="workspace-avatar" aria-hidden="true">
-          OT
+          {company.initials}
         </span>
         <span>
-          <strong>Otera</strong>
-          <small>Company context</small>
+          <strong>{company.name}</strong>
+          <small>{company.sidebarSubtitle}</small>
         </span>
       </div>
 
@@ -75,7 +75,7 @@ export function AppSidebar({ activeView, onViewChange, researchCutoff }) {
           <span aria-hidden="true" />
           Local snapshot
         </span>
-        <small>Research cutoff {researchCutoff}</small>
+        <small>Research cutoff {company.stats.researchCutoff}</small>
       </div>
     </aside>
   );

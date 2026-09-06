@@ -109,6 +109,17 @@ a svg {
   background: var(--qh-color-control-muted);
 }
 
+.company-switcher.qh-segmented {
+  flex: 0 0 auto;
+  padding: var(--qh-space-1);
+}
+
+.company-switcher .qh-segmented__item {
+  min-height: 2rem;
+  padding: var(--qh-space-1) var(--qh-space-3);
+  font-size: var(--qh-text-caption);
+}
+
 .artifact-toggle.qh-button,
 .empty-state .qh-button {
   gap: var(--qh-space-2);
@@ -825,6 +836,20 @@ a svg {
 }
 
 @media (max-width: 45rem) {
+  .app-topbar {
+    gap: var(--qh-space-2);
+    padding-inline: var(--qh-space-3);
+  }
+
+  .company-switcher.qh-segmented {
+    max-width: 60%;
+    overflow-x: auto;
+  }
+
+  .company-switcher .qh-segmented__item {
+    flex: 1 0 auto;
+  }
+
   .collection-stats,
   .artifact-grid,
   .evidence-panel {

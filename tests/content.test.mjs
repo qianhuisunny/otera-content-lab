@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
 
 import { ARTIFACT_DEFINITIONS } from "../src/data/artifactDefinitions.js";
+import { RETELL_ARTIFACT_DEFINITIONS } from "../src/data/retellArtifactDefinitions.js";
 import {
   filterArtifacts,
   normalizeSearchText,
@@ -40,6 +41,69 @@ test("the manifest contains every exact Otera source artifact once", async () =>
   }
 });
 
+test("the Retell manifest contains four context artifacts and seven evidence-derived dossiers", async () => {
+  assert.equal(RETELL_ARTIFACT_DEFINITIONS.length, 12);
+  assert.equal(
+    new Set(RETELL_ARTIFACT_DEFINITIONS.map((artifact) => artifact.id)).size,
+    12,
+  );
+
+  const dossiers = RETELL_ARTIFACT_DEFINITIONS.filter(
+    (artifact) => artifact.artifactType === "persona_dossier",
+  );
+  assert.equal(dossiers.length, 7);
+  assert.deepEqual(
+    dossiers.map((artifact) => artifact.id),
+    [
+      "retell-executive-sponsor",
+      "retell-workflow-owner",
+      "retell-technical-owner",
+      "retell-agent-builder",
+      "retell-conversation-quality-owner",
+      "retell-governance-approver",
+      "retell-solution-partner-platform-operator",
+    ],
+  );
+
+  for (const artifact of RETELL_ARTIFACT_DEFINITIONS) {
+    const fileUrl = new URL(`../${artifact.contentPath}`, import.meta.url);
+    const content = await readFile(fileUrl, "utf8");
+    const sourceLines = content.split(/\r?\n/).length - (content.endsWith("\n") ? 1 : 0);
+
+    assert.ok(content.trim().length > 0, `${artifact.id} must not be empty`);
+    assert.equal(
+      artifact.lineCount,
+      sourceLines,
+      `${artifact.id} must expose exact source depth`,
+    );
+  }
+});
+
+test("the company catalog keeps Otera and Retell as separate complete contexts", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true, hmr: false },
+  });
+  t.after(() => vite.close());
+  const { COMPANY_CATALOG } = await vite.ssrLoadModule("/src/data/companyCatalog.js");
+
+  assert.deepEqual(COMPANY_CATALOG.map(({ id }) => id), ["otera", "retell"]);
+
+  const otera = COMPANY_CATALOG.find(({ id }) => id === "otera");
+  const retell = COMPANY_CATALOG.find(({ id }) => id === "retell");
+
+  assert.equal(otera.artifacts.length, 10);
+  assert.equal(otera.stats.personas, 7);
+  assert.equal(otera.stats.researchCutoff, "2026-08-23");
+  assert.equal(retell.artifacts.length, 12);
+  assert.equal(retell.stats.personas, 7);
+  assert.equal(retell.stats.researchCutoff, "2026-09-06");
+  assert.match(retell.collectionTitle, /Retell AI/);
+  assert.match(retell.evidenceDescription, /Retell AI/);
+});
+
 test("search is normalized, case-insensitive, and combines with artifact type", () => {
   const artifacts = [
     {
@@ -65,6 +129,25 @@ test("search is normalized, case-insensitive, and combines with artifact type", 
   assert.deepEqual(filterArtifacts(artifacts, "no-such-result", "all"), []);
 });
 
+test("the Company filter groups company, founder, and market context without swallowing ICP", () => {
+  const artifacts = [
+    { id: "company", artifactType: "company_context", searchText: "" },
+    { id: "founder", artifactType: "founder_context", searchText: "" },
+    { id: "market", artifactType: "market_context", searchText: "" },
+    { id: "icp", artifactType: "icp_context", searchText: "" },
+    { id: "persona", artifactType: "persona_dossier", searchText: "" },
+  ];
+
+  assert.deepEqual(
+    filterArtifacts(artifacts, "", "company").map(({ id }) => id),
+    ["company", "founder", "market"],
+  );
+  assert.deepEqual(
+    filterArtifacts(artifacts, "", "icp_context").map(({ id }) => id),
+    ["icp"],
+  );
+});
+
 test("Markdown links keep sources external and route known local dossiers on-page", () => {
   assert.equal(resolveArtifactHref("https://www.otera.ai/security"), "https://www.otera.ai/security");
   assert.equal(resolveArtifactHref("01-economic-buyer.md"), "#artifact-economic-buyer");
@@ -74,6 +157,14 @@ test("Markdown links keep sources external and route known local dossiers on-pag
   );
   assert.equal(resolveArtifactHref("../Otera ICP context.md"), "#artifact-icp-context");
   assert.equal(resolveArtifactHref("unknown-local-note.md"), "#evidence");
+  assert.equal(
+    resolveArtifactHref("05-conversation-quality-owner.md"),
+    "#artifact-retell-conversation-quality-owner",
+  );
+  assert.equal(
+    resolveArtifactHref("../content/retell/market-context.md"),
+    "#artifact-retell-market-context",
+  );
 });
 
 test("the collection chrome keeps the user-requested clutter out of the initial page", async (t) => {
@@ -81,7 +172,7 @@ test("the collection chrome keeps the user-requested clutter out of the initial 
     appType: "custom",
     logLevel: "silent",
     root: new URL("..", import.meta.url).pathname,
-    server: { middlewareMode: true },
+    server: { middlewareMode: true, hmr: false },
   });
   t.after(() => vite.close());
 
@@ -89,8 +180,11 @@ test("the collection chrome keeps the user-requested clutter out of the initial 
   const { CollectionHeader } = await vite.ssrLoadModule(
     "/src/components/CollectionHeader.jsx",
   );
+  const { COMPANY_CATALOG } = await vite.ssrLoadModule("/src/data/companyCatalog.js");
+  const otera = COMPANY_CATALOG.find(({ id }) => id === "otera");
   const headerMarkup = renderToStaticMarkup(
     React.createElement(CollectionHeader, {
+      company: otera,
       filter: "all",
       onFilterChange: () => {},
       stats: { artifacts: 10, lines: 3164, personas: 7, researchCutoff: "2026-08-23" },
@@ -112,18 +206,20 @@ test("the sidebar exposes only Context and Workflow as accessible view tabs", as
     appType: "custom",
     logLevel: "silent",
     root: new URL("..", import.meta.url).pathname,
-    server: { middlewareMode: true },
+    server: { middlewareMode: true, hmr: false },
   });
   t.after(() => vite.close());
 
   const { AppSidebar, getNextViewIndex } = await vite.ssrLoadModule(
     "/src/components/AppSidebar.jsx",
   );
+  const { COMPANY_CATALOG } = await vite.ssrLoadModule("/src/data/companyCatalog.js");
+  const otera = COMPANY_CATALOG.find(({ id }) => id === "otera");
   const sidebarMarkup = renderToStaticMarkup(
     React.createElement(AppSidebar, {
       activeView: "context",
+      company: otera,
       onViewChange: () => {},
-      researchCutoff: "2026-08-23",
     }),
   );
   const navigationMarkup = sidebarMarkup.match(/<nav[\s\S]*?<\/nav>/)?.[0] ?? "";
@@ -162,7 +258,7 @@ test("the app defaults to Context while exposing the Workflow tab", async (t) =>
     appType: "custom",
     logLevel: "silent",
     root: new URL("..", import.meta.url).pathname,
-    server: { middlewareMode: true },
+    server: { middlewareMode: true, hmr: false },
   });
   t.after(() => vite.close());
 
@@ -182,6 +278,58 @@ test("the app defaults to Context while exposing the Workflow tab", async (t) =>
   assert.match(pageMarkup, /Otera context artifacts/);
   assert.match(pageMarkup, />Workflow</);
   assert.doesNotMatch(pageMarkup, /Video Storyboarding Briefing/);
+  assert.match(pageMarkup, /aria-label="Select company context"/);
+  assert.equal((pageMarkup.match(/class="qh-segmented__item/g) ?? []).length >= 6, true);
+  assert.match(pageMarkup, />Otera</);
+  assert.match(pageMarkup, />Retell AI</);
+});
+
+test("Retell metadata drives the sidebar, header, and evidence copy", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true, hmr: false },
+  });
+  t.after(() => vite.close());
+
+  const { AppSidebar } = await vite.ssrLoadModule("/src/components/AppSidebar.jsx");
+  const { CollectionHeader } = await vite.ssrLoadModule(
+    "/src/components/CollectionHeader.jsx",
+  );
+  const { EvidencePanel } = await vite.ssrLoadModule(
+    "/src/components/EvidencePanel.jsx",
+  );
+  const { COMPANY_CATALOG } = await vite.ssrLoadModule("/src/data/companyCatalog.js");
+  const retell = COMPANY_CATALOG.find(({ id }) => id === "retell");
+
+  const sidebarMarkup = renderToStaticMarkup(
+    React.createElement(AppSidebar, {
+      activeView: "context",
+      company: retell,
+      onViewChange: () => {},
+    }),
+  );
+  const headerMarkup = renderToStaticMarkup(
+    React.createElement(CollectionHeader, {
+      company: retell,
+      filter: "all",
+      onFilterChange: () => {},
+      stats: retell.stats,
+      visibleCount: retell.artifacts.length,
+    }),
+  );
+  const evidenceMarkup = renderToStaticMarkup(
+    React.createElement(EvidencePanel, { company: retell }),
+  );
+
+  assert.match(sidebarMarkup, />Retell AI</);
+  assert.match(sidebarMarkup, /RA/);
+  assert.match(sidebarMarkup, /2026-09-06/);
+  assert.match(headerMarkup, /Retell AI context artifacts/);
+  assert.match(headerMarkup, /12 shown/);
+  assert.match(evidenceMarkup, /Retell AI/);
+  assert.doesNotMatch(evidenceMarkup, /Otera/);
 });
 
 test("the workflow view uses registered sections and exact screenshot content", async (t) => {
