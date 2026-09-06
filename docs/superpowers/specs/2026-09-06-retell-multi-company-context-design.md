@@ -2,7 +2,7 @@
 
 ## Goal
 
-Extend the existing Content Lab from one company to two without changing the established Context/Workflow experience. Otera remains intact. Retell.ai becomes a separately selectable company with a writing-ready, evidence-backed company context, ICP, buying-committee map, and a research-determined set of persona deep dives.
+Extend the existing Content Lab from one company to two without changing the established Context/Workflow experience. Otera remains intact. Retell.ai becomes a separately selectable company with a writing-ready, evidence-backed company context, ICP, buying-committee map, and a research-determined set of persona deep dives. Retell context must be produced through the same two canonical research system prompts used for Otera, not through an ad hoc one-pass synthesis.
 
 The primary audience is a writing skill or human writer who needs reliable context for positioning, briefs, articles, and other company-specific content. The page must make it impossible to confuse Otera evidence with Retell evidence.
 
@@ -16,9 +16,37 @@ The primary audience is a writing skill or human writer who needs reliable conte
 - Determine Retell persona count from ICP and buying-committee evidence. Do not force the existing seven Otera persona categories onto Retell.
 - Continue consuming `@qianhui/ui` and existing `--qh-*` tokens. Do not create a parallel visual system or modify `../UI-library`.
 
+## Canonical two-prompt research pipeline
+
+Both Otera and Retell are governed by the same two large research prompts. The prompts are reusable templates; the company, date, geography, and prior-stage context change between runs.
+
+### Run 1 — Company Research System Prompt
+
+- Canonical source: `../content-library/The company context.md`
+- Repository snapshot: `prompts/company-research-system.md`
+- Inputs: company name and domain, research date, relevant geography, and any supplied source material.
+- Purpose: establish origin, founders, funding and business reality, product and technology, market position, customer reality, people, problems, and recent context.
+- Required raw output: `research/<company-id>/company-research-output.md`
+- Display output: `content/<company-id>/company-context.md`
+
+Run 1 is completed and evidence-checked before Run 2 begins. Its complete output becomes context for the second prompt.
+
+### Run 2 — Persona Research System Prompt
+
+- Canonical source: `../content-library/About the audience.md`
+- Repository snapshot: `prompts/persona-research-system.md`
+- Inputs: company name, research date, relevant geography, and the full verified Company Research output from Run 1.
+- Purpose: derive the observed ICP, buying committee, JTBD, buyer journey, customer language, blockers, and only as many personas as the evidence supports.
+- Required raw output: `research/<company-id>/persona-research-output.md`
+- Display outputs: `content/<company-id>/icp-context.md`, `content/<company-id>/persona-index.md`, and the evidence-supported persona dossiers.
+
+The second run first produces one coherent audience research output. That output is then split into the ICP, buying-committee index, and individual persona Markdown files without changing the underlying claims, confidence labels, or citations. Focused source follow-ups may close evidence gaps, but they do not introduce a third system prompt or bypass either canonical run.
+
+`About the founder.md` and `About the market.md` remain optional supplementary prompt templates. They are not substitutes for the two mandatory runs and are not automatically added to the Retell pipeline.
+
 ## Research scope
 
-Research is current through the execution date, initially `2026-09-06`, and covers:
+Within those two prompt runs, research is current through the execution date, initially `2026-09-06`, and covers:
 
 1. Company origin, founders, funding, ownership, trajectory, and business model.
 2. Product catalog, pricing model, technical architecture, integrations, deployment model, security, reliability, and limitations.
@@ -82,7 +110,7 @@ content/retell/02-<persona-slug>.md
 ...
 ```
 
-The final Retell artifact count is therefore `3 + evidence-supported persona count`. Each displayed file includes descriptive hyperlinks near consequential claims and a compact evidence/limitations section. Retain the canonical internal synthesis at `research/retell/report-source.md` and its claim-to-source ledger at `research/retell/claim-ledger.md`; neither file appears as a Context card.
+The final Retell artifact count is therefore `3 + evidence-supported persona count`. Each displayed file includes descriptive hyperlinks near consequential claims and a compact evidence/limitations section. The two raw prompt outputs remain the canonical stage records. Retain the reconciled synthesis at `research/retell/report-source.md` and its claim-to-source ledger at `research/retell/claim-ledger.md`; none of the research-stage files appears as a Context card.
 
 ## Multi-company data architecture
 
@@ -166,6 +194,8 @@ Retell uses the same two-column artifact grid, category filter, anchors, indepen
 
 Automated tests must demonstrate:
 
+- the repository contains exact snapshots of both canonical system prompts;
+- each company registry entry records the same two-prompt provenance in the correct order;
 - both companies exist exactly once in the registry;
 - Otera retains all ten existing artifacts unchanged;
 - every Retell Markdown file is nonempty and represented exactly once;
@@ -182,8 +212,12 @@ Browser verification must cover company switching in Context and Workflow, Retel
 
 ## Expected files in scope
 
+- Create: `prompts/company-research-system.md` as an exact snapshot of `../content-library/The company context.md`
+- Create: `prompts/persona-research-system.md` as an exact snapshot of `../content-library/About the audience.md`
+- Create: `research/retell/company-research-output.md`
+- Create: `research/retell/persona-research-output.md`
+- Create: `research/retell/report-source.md` and `research/retell/claim-ledger.md`
 - Create: `content/retell/*.md`
-- Create: Retell research synthesis and source ledger in a non-displayed research directory
 - Create: `src/data/retellArtifacts.js`
 - Create or refactor: a generic company registry module
 - Modify: `src/App.jsx`
@@ -200,6 +234,8 @@ Exact file boundaries may be tightened by the implementation plan after research
 
 - Rewriting, deleting, or re-researching Otera
 - Predetermining a seven-persona Retell structure
+- Replacing the two canonical system-prompt runs with a direct report-writing pass
+- Treating the optional founder or market prompts as mandatory third or fourth pipeline stages
 - Mixing evidence from the two companies
 - Company-specific Workflow catalogs
 - Retell brand redesign, logo recreation, custom company colors, or new card anatomy
