@@ -8,6 +8,7 @@ import {
   VideoCamera,
 } from "@phosphor-icons/react";
 import { IconGridSection } from "@qianhui/ui";
+import { IconTile } from "@qianhui/ui";
 
 const iconProps = { size: 24, weight: "regular" };
 
@@ -67,11 +68,48 @@ const workflowPhases = [
   },
 ];
 
-export function WorkflowView() {
+function WritePhase({ onOpenLongForm, phase }) {
+  return (
+    <section
+      aria-label={phase.heading}
+      className="qh-ui qh-section-surface qh-icon-grid-section"
+    >
+      <header className="qh-icon-grid-section__header">
+        <div>
+          <h2 className="qh-title">{phase.heading}</h2>
+          <p>{phase.description}</p>
+        </div>
+      </header>
+      <div className="qh-icon-grid-section__grid">
+        {phase.items.map((item) => (
+          item.name === "Long-Form Blog Article" ? (
+            <button
+              aria-label="Open Long-Form Blog Article"
+              className="workflow-action-tile"
+              key={item.name}
+              onClick={onOpenLongForm}
+              type="button"
+            >
+              <IconTile {...item} />
+            </button>
+          ) : (
+            <IconTile {...item} key={item.name} />
+          )
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function WorkflowView({ onOpenLongForm }) {
   return (
     <div aria-label="Content workflow" className="workflow-view">
       {workflowPhases.map((phase) => (
-        <IconGridSection {...phase} key={phase.heading} />
+        phase.heading === "WRITE" ? (
+          <WritePhase key={phase.heading} onOpenLongForm={onOpenLongForm} phase={phase} />
+        ) : (
+          <IconGridSection {...phase} key={phase.heading} />
+        )
       ))}
     </div>
   );

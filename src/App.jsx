@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useReducer, useState } from "react";
 import { Stack, Target } from "@phosphor-icons/react";
 import { Button, SegmentedControl } from "@qianhui/ui";
 import { AppSidebar } from "./components/AppSidebar";
@@ -6,20 +6,42 @@ import { ArtifactGrid } from "./components/ArtifactGrid";
 import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
+import { WritingTopbar } from "./components/writing/WritingTopbar";
+import { WritingWorkspace } from "./components/writing/WritingWorkspace";
 import { filterArtifacts } from "./data/artifactUtils";
 import { COMPANY_CATALOG, DEFAULT_COMPANY_ID } from "./data/companyCatalog";
+import { getWritingScenario } from "./data/writingScenario";
+import { createWritingSession, writingReducer } from "./data/writingSession";
 
 const companySwitcherItems = COMPANY_CATALOG.map(({ id, name }) => ({
   value: id,
   label: name,
 }));
 
-export function App() {
-  const [activeCompanyId, setActiveCompanyId] = useState(DEFAULT_COMPANY_ID);
-  const [activeView, setActiveView] = useState("context");
+export function resetWritingEntryScroll(
+  viewport = typeof window === "undefined" ? undefined : window,
+) {
+  if (typeof viewport?.scrollTo !== "function") return false;
+
+  viewport.scrollTo({ behavior: "instant", left: 0, top: 0 });
+  return true;
+}
+
+export function App({
+  initialCompanyId = DEFAULT_COMPANY_ID,
+  initialView = "context",
+}) {
+  const [activeCompanyId, setActiveCompanyId] = useState(initialCompanyId);
+  const [activeView, setActiveView] = useState(initialView);
   const [filter, setFilter] = useState("all");
   const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const [writingSession, dispatchWriting] = useReducer(
+    writingReducer,
+    initialCompanyId,
+    createWritingSession,
+  );
   const company = COMPANY_CATALOG.find(({ id }) => id === activeCompanyId) ?? COMPANY_CATALOG[0];
+  const writingScenario = getWritingScenario(writingSession.companyId);
 
   const visibleArtifacts = useMemo(
     () => filterArtifacts(company.artifacts, "", filter),
@@ -42,6 +64,11 @@ export function App() {
   };
 
   const resetFilters = () => setFilter("all");
+  const openLongFormWriter = () => {
+    resetWritingEntryScroll();
+    dispatchWriting({ type: "open-company", companyId: activeCompanyId });
+    setActiveView("writing");
+  };
 
   return (
     <div className="qh-ui content-lab">
@@ -49,39 +76,58 @@ export function App() {
         Skip to active content
       </a>
 
-      <header className="app-topbar">
-        <div className="app-brand">
-          <span className="app-mark" aria-hidden="true">
-            <Stack size={17} weight="bold" />
-          </span>
-          <strong>Content Lab</strong>
-          <span aria-hidden="true">/</span>
-          <span>{company.topbarLabel}</span>
-        </div>
-        <SegmentedControl
-          ariaLabel="Select company context"
-          className="company-switcher"
-          items={companySwitcherItems}
-          value={activeCompanyId}
-          onValueChange={handleCompanyChange}
+      {activeView === "writing" ? (
+        <WritingTopbar
+          onExit={() => setActiveView("workflow")}
+          scenario={writingScenario}
         />
-      </header>
+      ) : (
+        <header className="app-topbar">
+          <div className="app-brand">
+            <span className="app-mark" aria-hidden="true">
+              <Stack size={17} weight="bold" />
+            </span>
+            <strong>Content Lab</strong>
+            <span aria-hidden="true">/</span>
+            <span>{company.topbarLabel}</span>
+          </div>
+          <SegmentedControl
+            ariaLabel="Select company context"
+            className="company-switcher"
+            items={companySwitcherItems}
+            value={activeCompanyId}
+            onValueChange={handleCompanyChange}
+          />
+        </header>
+      )}
 
       <div className="app-shell">
         <AppSidebar
           activeView={activeView}
           company={company}
           onViewChange={setActiveView}
+          onWritingStepChange={(step) => dispatchWriting({ type: "go-to-step", step })}
+          writingSession={writingSession}
         />
 
-        <main className="content-library" id="content-library" tabIndex={-1}>
+        <main
+          className={`content-library${activeView === "writing" ? " writing-main" : ""}`}
+          id="content-library"
+          tabIndex={-1}
+        >
           <div
-            aria-labelledby={`${activeView}-tab`}
+            aria-labelledby={activeView === "writing" ? "workflow-tab" : `${activeView}-tab`}
             id="content-view-panel"
             role="tabpanel"
           >
             {activeView === "workflow" ? (
-              <WorkflowView />
+              <WorkflowView onOpenLongForm={openLongFormWriter} />
+            ) : activeView === "writing" ? (
+              <WritingWorkspace
+                dispatch={dispatchWriting}
+                scenario={writingScenario}
+                session={writingSession}
+              />
             ) : (
               <>
                 <CollectionHeader

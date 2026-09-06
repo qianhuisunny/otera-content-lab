@@ -402,3 +402,78 @@ test("the workflow view uses registered sections and exact screenshot content", 
     assert.ok(markup.includes(description), `${description} must be rendered`);
   }
 });
+
+test("Long-Form Blog Article is the workflow's semantic writing entry", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const { WorkflowView } = await vite.ssrLoadModule("/src/components/WorkflowView.jsx");
+  const markup = renderToStaticMarkup(
+    React.createElement(WorkflowView, { onOpenLongForm: () => {} }),
+  );
+
+  assert.equal(
+    (markup.match(/aria-label="Open Long-Form Blog Article"/g) ?? []).length,
+    1,
+  );
+  assert.match(markup, /<button[^>]*aria-label="Open Long-Form Blog Article"/);
+});
+
+test("the writing workspace initializes from the selected company", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const markup = renderToStaticMarkup(
+    React.createElement(App, { initialCompanyId: "retell", initialView: "writing" }),
+  );
+
+  assert.match(
+    markup,
+    /How to deploy production AI voice agents without losing control of quality or compliance/,
+  );
+  assert.match(markup, /RA-01/);
+  assert.doesNotMatch(markup, /OT-18/);
+});
+
+test("opening the writer resets inherited page scroll", async (t) => {
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: new URL("..", import.meta.url).pathname,
+    server: { middlewareMode: true },
+  });
+  t.after(() => vite.close());
+
+  const { resetWritingEntryScroll } = await vite.ssrLoadModule("/src/App.jsx");
+  const scrollCalls = [];
+  const viewport = {
+    scrollTo: (options) => scrollCalls.push(options),
+  };
+
+  assert.equal(resetWritingEntryScroll(viewport), true);
+  assert.deepEqual(scrollCalls, [{ behavior: "instant", left: 0, top: 0 }]);
+  assert.equal(resetWritingEntryScroll({}), false);
+});
+
+test("the narrow writing navigator contains its horizontal scroll", async () => {
+  const stylesheet = await readFile(
+    new URL("../src/writing.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    stylesheet,
+    /@media \(max-width: 56rem\)[\s\S]*?\.writing-sidebar \{[^}]*contain: layout paint;[^}]*overflow-x: auto;/,
+  );
+});

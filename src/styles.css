@@ -270,6 +270,40 @@ a svg {
   overflow-wrap: anywhere;
 }
 
+.workflow-action-tile {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  border-radius: var(--qh-radius-tile);
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workflow-action-tile .qh-icon-tile__mark {
+  transition:
+    background-color var(--qh-motion-fast) var(--qh-ease-standard),
+    transform var(--qh-motion-fast) var(--qh-ease-standard);
+}
+
+.workflow-action-tile:hover .qh-icon-tile__mark {
+  background: var(--qh-color-control-muted);
+  transform: translateY(-1px);
+}
+
+.workflow-action-tile:focus-visible {
+  outline: 3px solid var(--qh-color-focus);
+  outline-offset: 4px;
+}
+
+.content-library.writing-main {
+  max-width: none;
+  padding: 0;
+}
+
 .collection-header,
 .artifact-section,
 .evidence-panel {

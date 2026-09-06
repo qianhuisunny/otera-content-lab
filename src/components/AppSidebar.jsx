@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { WritingSidebar } from "./writing/WritingSidebar.jsx";
 
 const viewItems = [
   { id: "context", label: "Context" },
@@ -20,8 +21,35 @@ export function getNextViewIndex(key, index) {
   return null;
 }
 
-export function AppSidebar({ activeView, company, onViewChange }) {
+export function focusDestinationTabAfterWriting(previousView, currentView, tabNodes) {
+  if (previousView !== "writing" || currentView === "writing") return false;
+
+  const currentIndex = viewItems.findIndex((item) => item.id === currentView);
+  const destinationTab = currentIndex >= 0 ? tabNodes?.[currentIndex] : null;
+  if (typeof destinationTab?.focus !== "function") return false;
+
+  destinationTab.focus();
+  return true;
+}
+
+export function AppSidebar({
+  activeView,
+  company,
+  onViewChange,
+  onWritingStepChange,
+  writingSession,
+}) {
   const tabRefs = useRef([]);
+  const previousActiveViewRef = useRef(activeView);
+
+  useEffect(() => {
+    focusDestinationTabAfterWriting(
+      previousActiveViewRef.current,
+      activeView,
+      tabRefs.current,
+    );
+    previousActiveViewRef.current = activeView;
+  }, [activeView]);
 
   const handleTabKeyDown = (event, index) => {
     const nextIndex = getNextViewIndex(event.key, index);
@@ -47,7 +75,8 @@ export function AppSidebar({ activeView, company, onViewChange }) {
       <nav aria-label="Content Lab views">
         <div aria-label="Content Lab views" className="sidebar-nav" role="tablist">
           {viewItems.map((item, index) => {
-            const selected = activeView === item.id;
+            const selected = activeView === item.id
+              || (activeView === "writing" && item.id === "workflow");
             return (
               <button
                 aria-controls="content-view-panel"
@@ -69,6 +98,10 @@ export function AppSidebar({ activeView, company, onViewChange }) {
           })}
         </div>
       </nav>
+
+      {activeView === "writing" && writingSession ? (
+        <WritingSidebar onStepChange={onWritingStepChange} session={writingSession} />
+      ) : null}
 
       <div className="sidebar-footer">
         <span className="sidebar-status">
