@@ -2,7 +2,7 @@
 
 ## Goal
 
-Extend the existing Content Lab from one company to two without changing the established Context/Workflow experience. Otera remains intact. Retell.ai becomes a separately selectable company with a writing-ready, evidence-backed company context, ICP, buying-committee map, and a research-determined set of persona deep dives. Retell context must be produced through the same two canonical research system prompts used for Otera, not through an ad hoc one-pass synthesis.
+Extend the existing Content Lab from one company to two without changing the established Context/Workflow experience. Otera remains intact. Retell.ai becomes a separately selectable company with writing-ready, evidence-backed company, founder, market, ICP, buying-committee, and persona context. Retell context must be produced through all four canonical research system prompts in the content library, not through an ad hoc one-pass synthesis.
 
 The primary audience is a writing skill or human writer who needs reliable context for positioning, briefs, articles, and other company-specific content. The page must make it impossible to confuse Otera evidence with Retell evidence.
 
@@ -16,9 +16,9 @@ The primary audience is a writing skill or human writer who needs reliable conte
 - Determine Retell persona count from ICP and buying-committee evidence. Do not force the existing seven Otera persona categories onto Retell.
 - Continue consuming `@qianhui/ui` and existing `--qh-*` tokens. Do not create a parallel visual system or modify `../UI-library`.
 
-## Canonical two-prompt research pipeline
+## Canonical four-prompt research pipeline
 
-Both Otera and Retell are governed by the same two large research prompts. The prompts are reusable templates; the company, date, geography, and prior-stage context change between runs.
+Both Otera and Retell are governed by the same four large research prompts. The prompts are reusable templates; the company, date, geography, and prior-stage context change between runs.
 
 ### Run 1 — Company Research System Prompt
 
@@ -29,24 +29,42 @@ Both Otera and Retell are governed by the same two large research prompts. The p
 - Required raw output: `research/<company-id>/company-research-output.md`
 - Display output: `content/<company-id>/company-context.md`
 
-Run 1 is completed and evidence-checked before Run 2 begins. Its complete output becomes context for the second prompt.
+Run 1 is completed and evidence-checked before the three specialist runs begin. Its complete output becomes shared context for Founder, Market, and Audience research.
 
-### Run 2 — Persona Research System Prompt
+### Run 2 — Founder Research System Prompt
+
+- Canonical source: `../content-library/About the founder.md`
+- Repository snapshot: `prompts/founder-research-system.md`
+- Inputs: company name, research date, relevant geography, and the full verified Company Research output from Run 1.
+- Purpose: establish founder background, formative experiences, career and founding journey, communication patterns, values, leadership style, customer philosophy, industry vision, blind spots, and evidence limitations.
+- Required raw output: `research/<company-id>/founder-research-output.md`
+- Display output: `content/<company-id>/founder-context.md`
+
+### Run 3 — Market Research System Prompt
+
+- Canonical source: `../content-library/About the market.md`
+- Repository snapshot: `prompts/market-research-system.md`
+- Inputs: company name, research date, relevant geography, and the full verified Company Research output from Run 1.
+- Purpose: establish market domain, buying category, ecosystem map, direct and adjacent competition, alternatives, size and dynamics, company position, and recent market context.
+- Required raw output: `research/<company-id>/market-research-output.md`
+- Display output: `content/<company-id>/market-context.md`
+
+Founder and Market research may run in parallel after Company Research because neither depends on the other.
+
+### Run 4 — Audience / ICP / Persona Research System Prompt
 
 - Canonical source: `../content-library/About the audience.md`
 - Repository snapshot: `prompts/persona-research-system.md`
-- Inputs: company name, research date, relevant geography, and the full verified Company Research output from Run 1.
+- Inputs: company name, research date, relevant geography, and the full verified Company, Founder, and Market outputs from Runs 1–3.
 - Purpose: derive the observed ICP, buying committee, JTBD, buyer journey, customer language, blockers, and only as many personas as the evidence supports.
 - Required raw output: `research/<company-id>/persona-research-output.md`
 - Display outputs: `content/<company-id>/icp-context.md`, `content/<company-id>/persona-index.md`, and the evidence-supported persona dossiers.
 
-The second run first produces one coherent audience research output. That output is then split into the ICP, buying-committee index, and individual persona Markdown files without changing the underlying claims, confidence labels, or citations. Focused source follow-ups may close evidence gaps, but they do not introduce a third system prompt or bypass either canonical run.
-
-`About the founder.md` and `About the market.md` remain optional supplementary prompt templates. They are not substitutes for the two mandatory runs and are not automatically added to the Retell pipeline.
+Run 4 first produces one coherent audience research output. That output is then split into the ICP, buying-committee index, and individual persona Markdown files without changing the underlying claims, confidence labels, or citations. Focused source follow-ups may close evidence gaps, but they do not introduce a fifth system prompt or bypass any canonical run.
 
 ## Research scope
 
-Within those two prompt runs, research is current through the execution date, initially `2026-09-06`, and covers:
+Across those four prompt runs, research is current through the execution date, initially `2026-09-06`, and covers:
 
 1. Company origin, founders, funding, ownership, trajectory, and business model.
 2. Product catalog, pricing model, technical architecture, integrations, deployment model, security, reliability, and limitations.
@@ -96,11 +114,13 @@ Each resulting persona dossier contains:
 
 ## Content artifacts
 
-Retell always includes three foundation files:
+Retell always includes five foundation files:
 
 1. `content/retell/company-context.md`
-2. `content/retell/icp-context.md`
-3. `content/retell/persona-index.md`
+2. `content/retell/founder-context.md`
+3. `content/retell/market-context.md`
+4. `content/retell/icp-context.md`
+5. `content/retell/persona-index.md`
 
 Persona dossiers use stable ordinal filenames after the buying committee is established:
 
@@ -110,7 +130,7 @@ content/retell/02-<persona-slug>.md
 ...
 ```
 
-The final Retell artifact count is therefore `3 + evidence-supported persona count`. Each displayed file includes descriptive hyperlinks near consequential claims and a compact evidence/limitations section. The two raw prompt outputs remain the canonical stage records. Retain the reconciled synthesis at `research/retell/report-source.md` and its claim-to-source ledger at `research/retell/claim-ledger.md`; none of the research-stage files appears as a Context card.
+The final Retell artifact count is therefore `5 + evidence-supported persona count`. Each displayed file includes descriptive hyperlinks near consequential claims and a compact evidence/limitations section. The four raw prompt outputs remain the canonical stage records. Retain the reconciled synthesis at `research/retell/report-source.md` and its claim-to-source ledger at `research/retell/claim-ledger.md`; none of the research-stage files appears as a Context card.
 
 ## Multi-company data architecture
 
@@ -194,12 +214,12 @@ Retell uses the same two-column artifact grid, category filter, anchors, indepen
 
 Automated tests must demonstrate:
 
-- the repository contains exact snapshots of both canonical system prompts;
-- each company registry entry records the same two-prompt provenance in the correct order;
+- the repository contains exact snapshots of all four canonical system prompts;
+- each company registry entry records the same four-prompt provenance in the correct order;
 - both companies exist exactly once in the registry;
 - Otera retains all ten existing artifacts unchanged;
 - every Retell Markdown file is nonempty and represented exactly once;
-- Retell artifact count equals three foundation artifacts plus the researched persona set;
+- Retell artifact count equals five foundation artifacts plus the researched persona set;
 - all artifact IDs, keys, and anchors are unique across companies;
 - Otera remains the default company and Context remains the default view;
 - company selection updates identity, Context content, statistics, and research cutoff;
@@ -213,8 +233,12 @@ Browser verification must cover company switching in Context and Workflow, Retel
 ## Expected files in scope
 
 - Create: `prompts/company-research-system.md` as an exact snapshot of `../content-library/The company context.md`
+- Create: `prompts/founder-research-system.md` as an exact snapshot of `../content-library/About the founder.md`
+- Create: `prompts/market-research-system.md` as an exact snapshot of `../content-library/About the market.md`
 - Create: `prompts/persona-research-system.md` as an exact snapshot of `../content-library/About the audience.md`
 - Create: `research/retell/company-research-output.md`
+- Create: `research/retell/founder-research-output.md`
+- Create: `research/retell/market-research-output.md`
 - Create: `research/retell/persona-research-output.md`
 - Create: `research/retell/report-source.md` and `research/retell/claim-ledger.md`
 - Create: `content/retell/*.md`
@@ -234,8 +258,7 @@ Exact file boundaries may be tightened by the implementation plan after research
 
 - Rewriting, deleting, or re-researching Otera
 - Predetermining a seven-persona Retell structure
-- Replacing the two canonical system-prompt runs with a direct report-writing pass
-- Treating the optional founder or market prompts as mandatory third or fourth pipeline stages
+- Replacing the four canonical system-prompt runs with a direct report-writing pass
 - Mixing evidence from the two companies
 - Company-specific Workflow catalogs
 - Retell brand redesign, logo recreation, custom company colors, or new card anatomy

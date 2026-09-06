@@ -31,4 +31,4 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Preserve Otera as a separately selectable company when adding Retell.ai; never replace or rewrite the Otera Markdown artifacts for this expansion.
 - Keep company selection separate from the primary Context/Workflow view navigation and build it from the registered `SegmentedControl` component.
 - Derive Retell persona count and boundaries from ICP and buying-committee evidence. Do not force Retell into Otera's seven-persona structure.
-- Generate every company context through the two canonical prompt stages in order: `The company context.md` first, then `About the audience.md` with the verified company output supplied as context. Preserve both raw run outputs and never replace this sequence with ad hoc synthesis.
+- Generate every company context through all four canonical prompt stages: `The company context.md` first; `About the founder.md` and `About the market.md` next using the verified company output; then `About the audience.md` using all three verified prior outputs. Preserve all four raw run outputs and never replace this sequence with ad hoc synthesis.
