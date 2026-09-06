@@ -61,7 +61,7 @@ The category's real outcome is a completed, bounded workflow—not a voice that 
 | Governance | How do consent, disclosure, retention, PII, RBAC/SSO, DPA/BAA, subprocessors, residency, and regulated-use controls work? |
 | Economics | What is total configured cost per completed outcome after model, voice, telephony, transfer, concurrency, implementation, support, and cleanup? |
 
-Sampled developer/buyer language repeatedly uses “production stable,” “barge-in,” “off-script callers,” “function calling,” “dynamic transfer,” “fallback,” “logs,” “human handoff,” “observability,” and “all-in cost per minute.” Use this as vocabulary, not measured prevalence.
+A four-page convenience sample contained terms including “production stable,” “barge-in,” off-script behavior, transfer, fallback, logs, handoff, latency, and all-in cost. Use this only as illustrative vocabulary: the sample is non-random, affiliations are generally unverified, and it cannot establish prevalence.
 
 ## Ecosystem map
 
@@ -248,7 +248,7 @@ Material recent changes:
 - Gartner shifted mature-category language toward hybrid control, governance, and outcome pricing.
 - AI budgets accelerated while proven financial returns remained limited.
 - NICE completed the Cognigy acquisition, showing consolidation between CCaaS and agentic/conversational AI.
-- Vapi, Bland, and Synthflow raised new capital for enterprise expansion.
+- Vapi raised a $50M Series B ([TechCrunch](https://techcrunch.com/2026/05/12/vapi-hits-500m-valuation-as-amazon-ring-chose-its-ai-platform-over-40-rivals/), 2026-05-12); Bland announced a further $50M ([company announcement](https://www.bland.ai/blog/series-c), 2026-06-16); and Synthflow raised a $20M Series A ([TechCrunch](https://techcrunch.com/2025/06/24/how-synthflow-ai-is-cutting-through-the-noise-in-a-loud-ai-voice-category/), 2025-06-24). Funding signals competitive capacity, not product superiority.
 - EU Article 50 transparency duties became applicable and US state requirements advanced.
 
 Watch over the next two to three years:

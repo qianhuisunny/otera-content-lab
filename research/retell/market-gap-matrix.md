@@ -57,8 +57,8 @@
 | US state developments | California healthcare, Utah, and Colorado impose or will impose use-case-specific transparency/safety duties. | Supported | P1 | High | Scope and effective dates differ; Colorado rules were still developing. | Date and scope every state statement. |
 | EU transparency | AI Act Article 50 transparency duties applied from 2026-08-02. | Supported | P1 | High | Provider/deployer roles and exceptions are fact-specific. | Treat as procurement/product requirement, not blanket legal conclusion. |
 | UK/Canada telecom | Automated marketing and synthesized/prerecorded solicitation rules create consent and identity obligations. | Supported | P1 | High | Interactive GenAI treatment and exemptions require counsel. | Use directional risk segmentation, not legal advice. |
-| Community shortlist | Sampled 2026 discussions repeatedly compare Retell, Vapi, Bland, Synthflow, LiveKit, Pipecat, and Telnyx. | Supported for language | C1 | Medium | Affiliations and production experience are unverifiable; comparison spam is common. | Use only for vocabulary and evaluation questions. |
-| Community criteria | “Production stable,” interruption, off-script logic, function calling, transfer, fallbacks, logs, handoff, observability, and all-in cost/minute recur. | Supported for language | C1 | Medium | No quantified search-volume or representative panel. | Label as sampled language. |
+| Community shortlist | A four-page convenience sample compared some combination of Retell, Vapi, Bland, Telnyx, ElevenLabs and DIY voice stacks. | Supported only as illustrative language | C1 | Low | Tiny non-random sample; affiliations and production experience are unverifiable; comparison spam is common. | Do not infer prevalence or a stable shortlist. |
+| Community criteria | The convenience sample contained terms including latency, interruption, off-script behavior, transfer, logs, handoff and all-in cost. | Supported only as illustrative language | C1 | Low | No quantified search volume, representative panel or verified identities. | Attribute to the small sample; never say the terms are market-wide or repeated. |
 | Retell strongest opportunity | Neutral, model-flexible orchestration plus testing/operations and native workflows for complex phone operations. | Inference | P1/A1/X | Medium-high | Neutrality weakens if upstream components or bundles absorb the control plane. | Ground the opportunity in owned workflow/test/ops capabilities. |
 | Retell biggest threat | Upstream model/CPaaS compression plus CCaaS bundling and direct rivals with regional/VPC or services advantages. | Inference | P1/A1/I1/X | Medium-high | Competitive outcomes are uncertain and buyer-specific. | Present as a pressure set, not a predicted loser/winner. |
 | 12–24 month direction | Value shifts from basic voice assembly to evaluation, workflow completion, governance, vertical depth, regional infrastructure, and hybrid human operations. | Inference | A1/P1/I1/X | High directional | Timing and vendor winners are uncertain. | Re-verify after major model releases, acquisitions, regulation, or residency changes. |
@@ -106,12 +106,26 @@
 | [Synthflow pricing](https://synthflow.ai/pricing) | 2026-09-06 | Enterprise lifecycle, US/EU hosting, $30k/year starting contract | Volume claim unaudited. |
 | [Thoughtly docs](https://docs.thoughtly.com/getting-started/introduction), [pricing](https://thoughtly.com/pricing) | 2026-09-06 | No-code scope, plans from $500/month, enterprise data residency | “Unlimited” qualified by terms/overage. |
 | [ElevenAgents pricing](https://elevenlabs.io/pricing/agents?price.platform=agents_platform) | 2026-09-06 | Vertically integrated voice/agent packaging | LLM/telephony can be separate. |
+| [TechCrunch on Vapi Series B](https://techcrunch.com/2026/05/12/vapi-hits-500m-valuation-as-amazon-ring-chose-its-ai-platform-over-40-rivals/) | 2026-05-12 | $50M Series B | Independent reporting; funding does not establish product quality or adoption. |
+| [Bland Series C announcement](https://www.bland.ai/blog/series-c) | 2026-06-16 | Further $50M and more than $100M total funding | Company announcement, not independent reporting. |
+| [TechCrunch on Synthflow Series A](https://techcrunch.com/2025/06/24/how-synthflow-ai-is-cutting-through-the-noise-in-a-loud-ai-voice-category/) | 2025-06-24 | $20M Series A | Independent reporting; funding does not establish product quality or adoption. |
 | [PolyAI](https://poly.ai/), [Parloa](https://www.parloa.com/platform/), [Decagon Voice](https://decagon.ai/product/voice) | 2026-09-06 | Enterprise CAI/voice alternatives | Vendor claims; no common benchmark. |
 | [NICE 2025 annual report](https://www.sec.gov/Archives/edgar/data/1003935/000100393526000010/nice-20251231.htm) | Filed 2026 | $887.3M final Cognigy business-combination consideration | Separate founder holdback is post-combination compensation. |
 | [Twilio ConversationRelay](https://www.twilio.com/docs/voice/twiml/connect/conversationrelay) | Living docs | CPaaS-managed voice with customer AI logic | Customer retains application/AI work. |
 | [OpenAI Realtime API](https://openai.com/index/introducing-the-realtime-api/) | 2024-10-01 / production update 2025-08-28 | Direct speech/SIP/MCP upstream substitute | Not full agent operations platform. |
 | [LiveKit Agents](https://docs.livekit.io/agents/), [Pipecat](https://github.com/pipecat-ai/pipecat) | 2026-09-06 | Open-source/modular DIY alternatives | Buyer owns production operations. |
 | [BLS customer-service representatives](https://www.bls.gov/ooh/office-and-administrative-support/customer-service-representatives.htm) | Modified 2026-08-27 | 2.666M US jobs, $21.53/hour, -5% 2025–35, 289,500 replacement openings | Includes non-phone work; not TAM. |
+
+### Community-language convenience sample
+
+Retrieved 2026-09-06. These four pages were selected because they surfaced in searches about Retell evaluation, latency, and cost; they are not random or representative. Use them only to recover possible buyer vocabulary.
+
+| Source | Published | What appeared | Evidence limit |
+| --- | --- | --- | --- |
+| [Launch HN: Retell AI](https://news.ycombinator.com/item?id=39453402) | 2024-02-21 | Latency, interruptions, uptime, transfers, and abuse/call-duration questions | Founder launch thread; commenters' customer status and experience vary. |
+| [Testing Retell AI for Voice Agents](https://www.reddit.com/r/AIToolTesting/comments/1nsfa2g/) | 2025 | Latency, interruptions, and DIY comparison | Anonymous self-report; publication month not preserved in the search result. |
+| [Lessons from testing different AI voice agents](https://www.reddit.com/r/aiagents/comments/1nlwmi3/) | 2025 | Latency, memory, out-of-the-box stack, and cost language | Anonymous; possible product affiliation; no verified workload. |
+| [Open-source voice-agent latency benchmark discussion](https://www.reddit.com/r/voiceagents/comments/1vjdwxj/) | 2026 | Real-call latency, published configuration, and cross-vendor comparison | Benchmark authorship and method require separate validation; one performance dimension only. |
 
 ### Adoption and regulatory sources
 

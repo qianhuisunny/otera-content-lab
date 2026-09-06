@@ -142,7 +142,7 @@ The category promise is not merely “a human-sounding voice.” It is autonomou
 | Security/governance | consent/disclosure; recording/retention; PII redaction; access/RBAC/SSO; auditability; subprocessors; BAA/DPA; residency; regulated-use boundaries |
 | Economics | fully configured cost/minute; transfer and telephony charges; model/voice premiums; concurrency; implementation; support; internal operations; cost per completed outcome |
 
-The repeated community shorthand—“production stable,” “barge-in,” “off-script callers,” “dynamic transfer,” “fallback,” “logs,” “human handoff,” and “all-in cost per minute”—maps closely to this list. It is sampled language, not quantified preference.
+A four-page convenience sample of Launch HN and Reddit discussions contained terms such as “production stable,” “barge-in,” off-script callers, transfer, fallback, logs, handoff, latency, and all-in cost. It is illustrative vocabulary, not a representative sample or quantified preference; identities, affiliations, and production experience are generally unverified.
 
 ## 4. The Ecosystem Map
 
@@ -220,7 +220,7 @@ The direct shortlist depends on whether the buyer values modular developer contr
 | Thoughtly | No-code inbound/outbound agents for qualification, scheduling, transfer, SMS, and CRM | Plans from $500/month; enterprise custom | Packaged use cases and enterprise-dedicated infrastructure/residency positioning | “Unlimited” is qualified by contract/overage; platform depth not independently benchmarked. [Docs](https://docs.thoughtly.com/getting-started/introduction), [pricing](https://thoughtly.com/pricing) |
 | ElevenAgents | Voice-agent platform vertically connected to ElevenLabs speech assets | Additional calls advertised at $0.08/minute; LLM and telephony may be separate | Voice brand/model integration, workflow builder, knowledge, languages | Also an upstream supplier to other platforms; full configured economics and operations differ. [Pricing](https://elevenlabs.io/pricing/agents?price.platform=agents_platform) |
 
-Funding reinforces competitive intensity but not product superiority. Independent reporting says Vapi raised a $50M Series B; Bland announced a $50M Series C and more than $100M total funding; TechCrunch reported Synthflow's $20M Series A. These pools can fund enterprise support, regional infrastructure, vertical solutions, and field engineering. They do not prove deployment outcomes.
+Funding reinforces competitive intensity but not product superiority. [TechCrunch reported](https://techcrunch.com/2026/05/12/vapi-hits-500m-valuation-as-amazon-ring-chose-its-ai-platform-over-40-rivals/) Vapi's $50M Series B on 2026-05-12; [Bland announced](https://www.bland.ai/blog/series-c) a further $50M and more than $100M total funding on 2026-06-16; and [TechCrunch reported](https://techcrunch.com/2025/06/24/how-synthflow-ai-is-cutting-through-the-noise-in-a-loud-ai-voice-category/) Synthflow's $20M Series A on 2025-06-24. Bland is the company's own announcement; the other two are independent reporting. These pools can fund enterprise support, regional infrastructure, vertical solutions, and field engineering. They do not prove deployment outcomes.
 
 ### Enterprise conversational-AI and CCaaS-adjacent competitors
 
