@@ -7,6 +7,25 @@ const root = new URL("../", import.meta.url);
 const json = async (path) => JSON.parse(await readFile(new URL(path, root), "utf8"));
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
+async function retellMarkdownPaths(corpusRoot = root) {
+  const paths = [];
+  async function visit(directory) {
+    for (const entry of await readdir(new URL(directory + "/", corpusRoot), { withFileTypes: true })) {
+      const path = directory + "/" + entry.name;
+      if (entry.isDirectory()) await visit(path);
+      else if (entry.isFile() && entry.name.endsWith(".md")) paths.push(path);
+    }
+  }
+  for (const directory of ["content/retell", "research/retell"]) await visit(directory);
+  return paths.sort();
+}
+
+test("corpus coverage discovers nested Markdown files before comparing explicit routes", async () => {
+  const paths = await retellMarkdownPaths(new URL("fixtures/retell-corpus/", import.meta.url));
+  assert.deepEqual(paths, ["content/retell/company.md", "content/retell/nested/buyer.md",
+    "research/retell/nested/proof.md"]);
+});
+
 test("the sales-enablement package preserves the pinned upstream sources", async () => {
   const expected = {
     "skills/sales-enablement/LICENSE": "b70d71e24e40fce5da8f4b6f9cd862096a048e433db7f3c8cac5e348e6d34591",
@@ -51,12 +70,7 @@ test("the workflow resolves five source-backed stages and seven workstreams", as
 });
 
 test("every Retell Markdown file has exactly one explicit source record", async () => {
-  const paths = [];
-  for (const directory of ["content/retell", "research/retell"]) {
-    for (const name of await readdir(new URL(directory + "/", root))) {
-      if (name.endsWith(".md")) paths.push(directory + "/" + name);
-    }
-  }
+  const paths = await retellMarkdownPaths();
   const manifest = await json("skills/sales-enablement/context-sources.json");
   assert.equal(paths.length, 24);
   assert.deepEqual(manifest.sources.map(({ path }) => path).sort(), paths.sort());

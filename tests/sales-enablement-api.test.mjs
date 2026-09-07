@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { handleSalesEnablementApiRequest } from "../server/sales-enablement-api.js";
 import { RETELL_SALES_ENABLEMENT_INPUT } from "../src/data/salesEnablementScenario.js";
+import { RETELL_SALES_ENABLEMENT_EXAMPLE_RUN } from "../src/data/salesEnablementExample.js";
+import { retrieveSalesEnablementRun } from "../src/data/salesEnablementClient.js";
 
 const createRequest = (body = RETELL_SALES_ENABLEMENT_INPUT, options = {}) =>
   new Request("https://lab.example/api/sales-enablement/runs", {
@@ -28,6 +30,86 @@ const publicRun = (id, status = "queued") => ({
   workstreams: workflow.workstreams.map(({ id }) =>
     ({ id, status: "queued", evidenceCount: 0, summary: "" })),
   artifact: null, error: null,
+});
+
+const spawnItems = (id) => [{
+  type: "multi_agent_call", id: "mac_" + id, call_id: "call_" + id,
+  action: "spawn_agent", arguments: JSON.stringify({ task_name: id, fork_turns: "none", message: "PRIVATE_PACKET" }),
+  agent: { agent_name: "/root" },
+}, {
+  type: "multi_agent_call_output", id: "maco_" + id, call_id: "call_" + id,
+  action: "spawn_agent", agent: { agent_name: "/root" },
+  output: [{ type: "output_text", text: JSON.stringify({ task_name: "/root/" + id }), annotations: [], logprobs: [] }],
+}];
+
+test("raw provider execution evidence survives API normalization and client validation truthfully", async (t) => {
+  const cases = [
+    ["root artifact only", () => [], "failed", "queued"],
+    ["missing call outputs", (id) => spawnItems(id).slice(0, 1), "failed", "queued"],
+    ["pending call outputs", (id) => {
+      const items = spawnItems(id); items[1].status = "in_progress"; return items;
+    }, "failed", "queued"],
+    ["failed spawn outputs", (id) => {
+      const items = spawnItems(id); items[1].status = "failed"; return items;
+    }, "failed", "queued"],
+    ["spawn output error", (id) => {
+      const items = spawnItems(id);
+      items[1].output[0].text = JSON.stringify({ error: "PRIVATE_SPAWN_ERROR" });
+      return items;
+    }, "failed", "queued"],
+    ["mismatched call IDs", (id) => {
+      const items = spawnItems(id); items[1].call_id += "_other"; return items;
+    }, "failed", "queued"],
+    ["mismatched child path", (id) => {
+      const items = spawnItems(id);
+      items[1].output[0].text = JSON.stringify({ task_name: "/root/other/" + id });
+      return items;
+    }, "failed", "queued"],
+    ["root message to child is not child activity", (id) => [{
+      type: "agent_message", id: "amsg_" + id, author: "/root", recipient: "/root/" + id,
+      agent: { agent_name: "/root/" + id }, content: [{ type: "encrypted_content", encrypted_content: "PRIVATE_MESSAGE" }],
+    }], "failed", "queued"],
+    ["successful spawn results do not certify lane completion", spawnItems, "completed", "running"],
+    ["child-authored encrypted activity", (id) => [{
+      type: "agent_message", id: "amsg_" + id, author: "/root/" + id, recipient: "/root",
+      agent: { agent_name: "/root" }, content: [{ type: "encrypted_content", encrypted_content: "PRIVATE_MESSAGE" }],
+    }], "completed", "running"],
+    ["actual completed children", (id) => [{
+      type: "message", phase: "final_answer", status: "completed", agent: { agent_name: "/root/" + id },
+      content: [{ type: "output_text", text: "PRIVATE_RESEARCH" }],
+    }], "completed", "complete"],
+    ["actual failed children retain gaps", (id) => [{
+      type: "message", phase: "final_answer", status: "incomplete", agent: { agent_name: "/root/" + id },
+      content: [{ type: "output_text", text: "PRIVATE_FAILED_RESEARCH" }],
+    }], "completed", "failed"],
+  ];
+  for (const [name, childItems, status, laneStatus] of cases) await t.test(name, async () => {
+    const raw = {
+      id: "resp_evidence123", status: "completed", created_at: 1788652800,
+      output: [...workflow.workstreams.flatMap(({ id }) => childItems(id)), {
+        type: "message", phase: "final_answer", status: "completed", role: "assistant",
+        agent: { agent_name: "/root" }, content: [{ type: "output_text",
+          text: JSON.stringify(RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact) }],
+      }],
+    };
+    const run = await retrieveSalesEnablementRun(raw.id, {
+      fetchImpl: (path) => handleSalesEnablementApiRequest(new Request("https://lab.example" + path), {
+        env: { OPENAI_API_KEY: "PRIVATE_KEY" }, createGate: gate(), statusGate: gate(),
+        readWorkflow: async () => workflow,
+        fetchImpl: async () => Response.json(raw),
+      }),
+    });
+    assert.equal(run.status, status);
+    assert.ok(run.workstreams.every((lane) => lane.status === laneStatus));
+    if (status === "failed") {
+      assert.equal(run.error.code, "MULTI_AGENT_INCOMPLETE");
+      assert.equal(run.artifact, null);
+    } else {
+      assert.equal(run.artifact.slides.length, 11);
+      assert.deepEqual(run.artifact.review.blockingGaps, RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact.review.blockingGaps);
+    }
+    assert.doesNotMatch(JSON.stringify(run), /PRIVATE_|call_id|multi_agent_call|agent_message|agent_name/);
+  });
 });
 
 test("create starts one provider run and returns only the normalized public run", async () => {

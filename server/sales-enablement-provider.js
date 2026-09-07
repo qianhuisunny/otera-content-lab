@@ -125,15 +125,29 @@ const workstreamName = (value, workflow) => {
   if (typeof value !== "string") return null;
   return workflow.workstreams.find(({ id }) => value === id || value === "/root/" + id)?.id ?? null;
 };
+const actionName = (item) => item?.name ??
+  (typeof item?.action === "string" ? item.action : item?.action?.name);
 const spawnName = (item, workflow) => {
-  const action = item?.name ?? (typeof item?.action === "string" ? item.action : item?.action?.name);
   if (item?.type !== "multi_agent_call" ||
-      action !== "spawn_agent" ||
-      (item.agent?.agent_name && item.agent.agent_name !== "/root")) return null;
+      actionName(item) !== "spawn_agent" ||
+      item.agent?.agent_name !== "/root") return null;
   try {
     const rawArgs = item.arguments ?? item.action?.arguments ?? {};
     const args = typeof rawArgs === "string" ? JSON.parse(rawArgs) : rawArgs;
     return workstreamName(args.task_name ?? args.taskName ?? args.name, workflow);
+  } catch { return null; }
+};
+const createdChild = (item, spawnCalls) => {
+  const expected = spawnCalls.get(item?.call_id);
+  if (!expected || item?.type !== "multi_agent_call_output" ||
+      actionName(item) !== "spawn_agent" || item.agent?.agent_name !== "/root" ||
+      (item.status !== undefined && item.status !== "completed") || item.error ||
+      !Array.isArray(item.output)) return null;
+  try {
+    const result = JSON.parse(item.output
+      .filter((part) => part?.type === "output_text" && typeof part.text === "string")
+      .map(({ text }) => text).join(""));
+    return !result.error && result.task_name === "/root/" + expected ? expected : null;
   } catch { return null; }
 };
 const rootFinalText = (output) => output
@@ -155,17 +169,27 @@ export function normalizeSalesEnablementResponse(response, workflow) {
 function normalizeProviderResponse(response, workflow) {
   const status = providerStatus(response?.status);
   const activity = new Map(workflow.workstreams.map(({ id }) => [id, "queued"]));
-  const seenAgents = new Set();
-  for (const item of Array.isArray(response?.output) ? response.output : []) {
+  const executedAgents = new Set();
+  const output = Array.isArray(response?.output) ? response.output : [];
+  const spawnCalls = new Map();
+  for (const item of output) {
     const spawned = spawnName(item, workflow);
-    if (spawned) {
-      if (activity.get(spawned) === "queued") activity.set(spawned, "running");
-      seenAgents.add(spawned);
+    if (spawned && typeof item.call_id === "string") spawnCalls.set(item.call_id, spawned);
+  }
+  for (const item of output) {
+    const created = createdChild(item, spawnCalls);
+    if (created) {
+      executedAgents.add(created);
+      if (activity.get(created) === "queued") activity.set(created, "running");
     }
-    const agentPath = item?.agent?.agent_name;
+    // For encrypted inter-agent messages, agent_name is the recipient, not the author.
+    const agentPath = item?.type === "agent_message" ? item.author : item?.agent?.agent_name;
     const agent = typeof agentPath === "string" && agentPath.startsWith("/root/") ?
       workstreamName(agentPath, workflow) : null;
-    if (agent) seenAgents.add(agent);
+    if (agent) {
+      executedAgents.add(agent);
+      if (activity.get(agent) === "queued") activity.set(agent, "running");
+    }
     if (agent && (item?.status === "failed" ||
         (item?.type === "message" && item.status === "incomplete"))) {
       activity.set(agent, "failed");
@@ -190,7 +214,7 @@ function normalizeProviderResponse(response, workflow) {
   if (status === "completed") {
     const missingAgents = workflow.workstreams
       .map(({ id }) => id)
-      .filter((id) => !seenAgents.has(id));
+      .filter((id) => !executedAgents.has(id));
     if (missingAgents.length) {
       publicStatus = "failed";
       error = {
@@ -202,9 +226,6 @@ function normalizeProviderResponse(response, workflow) {
     } else try {
       artifact = validateSalesEnablementArtifact(
         JSON.parse(rootFinalText(response.output ?? [])));
-      for (const finding of artifact.research) {
-        if (activity.get(finding.id) !== "failed") activity.set(finding.id, "complete");
-      }
     } catch {
       publicStatus = "failed";
       error = {

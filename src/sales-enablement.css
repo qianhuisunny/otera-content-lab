@@ -51,6 +51,7 @@
 .sales-workstreams { border: 1px solid var(--qh-color-border); border-radius: var(--qh-radius-card); background: var(--qh-color-surface); overflow: hidden; }
 .sales-workstreams > details + details { border-top: 1px solid var(--qh-color-border); }
 .sales-workstreams summary { display: flex; align-items: center; gap: var(--qh-space-3); padding: var(--qh-space-4); cursor: pointer; }
+.sales-enablement-shell .sales-workstreams summary:focus-visible { outline-offset: -3px; }
 .sales-workstreams summary::after { content: "+"; color: var(--qh-color-text-muted); }
 .sales-workstreams details[open] > summary::after { content: "−"; }
 .sales-workstream-label { flex: 1; min-width: 0; }

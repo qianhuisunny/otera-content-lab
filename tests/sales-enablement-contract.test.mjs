@@ -67,7 +67,19 @@ test("evidence uses the canonical classifications and schema-matched bounds", ()
   assert.deepEqual(evidence.confidence.enum, ["high", "medium", "low"]);
   assert.equal(evidence.sourceIds.minItems, 1);
   assert.equal(evidence.sourceIds.maxItems, 20);
-  assert.equal(evidence.sourceIds.uniqueItems, true);
+  assert.equal(evidence.sourceIds.uniqueItems, undefined);
   const headline = schema.$defs.slide.properties.headline;
   assert.equal(schema.$defs[headline.$ref.slice("#/$defs/".length)].maxLength, 500);
+});
+
+test("local validation rejects duplicate source and evidence references independently of wire constraints", () => {
+  const duplicateSources = structuredClone(RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact);
+  const sourceIds = duplicateSources.research[0].evidence[0].sourceIds;
+  sourceIds.push(sourceIds[0]);
+  assert.throws(() => validateSalesEnablementArtifact(duplicateSources), /duplicate.*source ID/i);
+
+  const duplicateEvidence = structuredClone(RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact);
+  const evidenceIds = duplicateEvidence.slides.find((slide) => slide.evidenceIds.length).evidenceIds;
+  evidenceIds.push(evidenceIds[0]);
+  assert.throws(() => validateSalesEnablementArtifact(duplicateEvidence), /duplicate.*evidence ID/i);
 });

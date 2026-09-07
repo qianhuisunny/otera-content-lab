@@ -41,11 +41,16 @@ function throwIfAborted(signal) {
 
 const defaultSleep = (milliseconds, signal) => new Promise((resolve, reject) => {
   throwIfAborted(signal);
-  const timer = setTimeout(resolve, milliseconds);
-  signal?.addEventListener("abort", () => {
+  const onAbort = () => {
     clearTimeout(timer);
+    signal?.removeEventListener("abort", onAbort);
     reject(signal.reason ?? new DOMException("The request was cancelled.", "AbortError"));
-  }, { once: true });
+  };
+  const timer = setTimeout(() => {
+    signal?.removeEventListener("abort", onAbort);
+    resolve();
+  }, milliseconds);
+  signal?.addEventListener("abort", onAbort, { once: true });
 });
 
 export async function fetchSalesEnablementHealth({ fetchImpl = fetch, signal } = {}) {
@@ -58,10 +63,17 @@ export async function fetchSalesEnablementHealth({ fetchImpl = fetch, signal } =
 }
 
 export async function createSalesEnablementRun(input, { fetchImpl = fetch, signal } = {}) {
+  // Preserve textarea edits in session; blank lines are not objection entries on the wire.
+  const requestInput = Array.isArray(input?.knownObjections) ? {
+    ...input,
+    knownObjections: input.knownObjections
+      .map((entry) => typeof entry === "string" ? entry.trim() : entry)
+      .filter((entry) => entry !== ""),
+  } : input;
   return validatePublicSalesEnablementRun(await responseJson(await fetchImpl(
     "/api/sales-enablement/runs", {
       method: "POST", signal, headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
+      body: JSON.stringify(requestInput),
     })));
 }
 
@@ -74,7 +86,7 @@ export async function retrieveSalesEnablementRun(id, { fetchImpl = fetch, signal
 }
 
 export async function pollSalesEnablementRun(id, {
-  fetchImpl = fetch, signal, onUpdate = () => {}, sleep = defaultSleep,
+  fetchImpl = fetch, signal, onUpdate = () => {}, onRetry = () => {}, sleep = defaultSleep,
 } = {}) {
   let attempt = 0;
   while (true) {
@@ -83,8 +95,11 @@ export async function pollSalesEnablementRun(id, {
     try {
       run = await retrieveSalesEnablementRun(id, { fetchImpl, signal });
     } catch (error) {
+      throwIfAborted(signal);
       if (!error?.retryable || !Number.isInteger(error.retryAfterSeconds) ||
           error.retryAfterSeconds <= 0) throw error;
+      onRetry({ retryAfterSeconds: error.retryAfterSeconds });
+      throwIfAborted(signal);
       await sleep(error.retryAfterSeconds * 1000, signal);
       continue;
     }

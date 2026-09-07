@@ -139,6 +139,11 @@ export function salesEnablementReducer(state, action) {
     return { ...state, requestStatus: "idle", error: action.error,
       ...providerCooldown(state, action.error, action.requestId) };
   }
+  if (action.type === "polling-wait") {
+    if (state.mode !== "live" || state.requestStatus !== "polling" ||
+        !action.requestId || action.requestId !== state.requestId || action.runId !== state.run.id) return state;
+    return { ...state, ...providerCooldown(state, action, action.requestId) };
+  }
   if (action.type === "request-cancelled") {
     if (!action.requestId || action.requestId !== state.requestId || state.requestStatus === "idle") return state;
     return { ...state, requestStatus: "idle", requestId: null, error: {

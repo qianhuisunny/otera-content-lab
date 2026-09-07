@@ -186,6 +186,42 @@ test("scope controls expose labels and edit every input through the reducer cont
   ["discovery", "demo", "evaluation", "proposal"]);
 });
 
+test("UI-edited objection lines prepare a valid request without changing the form or other wire fields", async (t) => {
+  const { SalesEnablementScopeStep } = await vite.ssrLoadModule(
+    "/src/components/sales-enablement/SalesEnablementScopeStep.jsx");
+  const { validateSalesEnablementInput } = await vite.ssrLoadModule("/src/data/salesEnablementContract.js");
+  for (const [edited, expected] of [["", []], ["\n \n", []], ["Cost\n", ["Cost"]],
+    ["  Cost  \n\n Operational ownership \n", ["Cost", "Operational ownership"]]]) {
+    await t.test(JSON.stringify(edited), async () => {
+      const completed = await publicRun();
+      let submitted;
+      let validated;
+      const harness = await lifecycleHarness(async (_url, options) => {
+        assert.equal(options.method, "POST");
+        submitted = JSON.parse(options.body);
+        validated = validateSalesEnablementInput(submitted);
+        return response(completed);
+      });
+      harness.dispatch({ type: "set-input", field: "buyerProblem", value: "  Keep this wording\nand spacing  " });
+      const getObjections = () => elements(SalesEnablementScopeStep({ input: harness.session.input,
+        dispatch: harness.dispatch })).find((node) => node.type === "textarea" && node.props.name === "knownObjections");
+      getObjections().props.onChange({ target: { name: "knownObjections", value: edited } });
+      assert.equal(getObjections().props.value, edited);
+      const formInput = structuredClone(harness.session.input);
+      await harness.lifecycle.runLive(formInput);
+      assert.equal(harness.session.run.id, completed.id);
+      assert.equal(harness.session.run.status, "completed");
+      assert.deepEqual(submitted.knownObjections, expected);
+      assert.deepEqual(validated.knownObjections, expected);
+      for (const key of Object.keys(formInput).filter((key) => key !== "knownObjections")) {
+        assert.equal(submitted[key], formInput[key], key);
+      }
+      assert.deepEqual(harness.session.input, formInput);
+      assert.equal(getObjections().props.value, edited);
+    });
+  }
+});
+
 test("live action stays disabled until configured and idle without a retry block", async () => {
   const { SalesEnablementWorkspace, session } = await workspaceModules();
   for (const [configured, requestStatus, retryBlocked, disabled] of [
@@ -539,6 +575,57 @@ test("Example keeps provider cooldown visible and blocks creates across remount 
   assert.match(readyMarkup, /<button(?![^>]*disabled)[^>]*>Run live<\/button>/);
   await reopened.runLive(harness.session.input);
   assert.equal(calls, 2);
+});
+
+test("Example during a polling wait retains the absolute cooldown until an explicit create after expiry", async (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  const queued = await publicRun("queued");
+  const completed = await publicRun();
+  const calls = [];
+  let waiting;
+  const waitStarted = new Promise((resolve) => { waiting = resolve; });
+  const harness = await lifecycleHarness(async (url, options) => {
+    calls.push([url, options.method ?? "GET"]);
+    if (calls.length === 1) return response(queued);
+    if (calls.length === 2) return response({ error: {
+      code: "RATE_LIMITED", message: "PRIVATE_POLL_ERROR", retryable: true, retryAfterSeconds: 10,
+    } }, 429);
+    return response(completed);
+  }, (_ms, signal) => new Promise((_resolve, reject) => {
+    signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+    waiting();
+  }));
+  const pending = harness.lifecycle.runLive(harness.session.input);
+  t.after(async () => { harness.lifecycle.abort(); await pending; });
+  await waitStarted;
+  assert.deepEqual(harness.session.cooldown, { until: 11000, requestId: harness.session.requestId });
+  assert.equal(harness.session.requestStatus, "polling");
+  assert.doesNotMatch(JSON.stringify(harness.session), /PRIVATE_POLL_ERROR/);
+  const cooldown = harness.session.cooldown;
+  harness.lifecycle.showExample();
+  await pending;
+  assert.equal(harness.session.mode, "example");
+  assert.equal(harness.session.requestStatus, "idle");
+  assert.equal(harness.session.activeRun.id, "resp_lifecycle123");
+  now = 7000;
+  await harness.lifecycle.runLive(harness.session.input);
+  await harness.lifecycle.releaseCooldown(cooldown);
+  assert.equal(calls.length, 2);
+  const { SalesEnablementWorkspace } = await workspaceModules();
+  const props = () => ({ session: { ...harness.session, provider: { checked: true, configured: true } }, dispatch() {}, onExit() {} });
+  const markup = render(SalesEnablementWorkspace, props());
+  assert.match(markup, /4 seconds/);
+  assert.match(markup, /<button[^>]*disabled[^>]*>Run live<\/button>/);
+  now = 11000;
+  await harness.lifecycle.releaseCooldown(cooldown);
+  await harness.lifecycle.resume(harness.session.input);
+  assert.equal(calls.length, 2);
+  assert.equal(harness.session.mode, "example");
+  assert.equal(harness.session.retryBlocked, false);
+  assert.match(render(SalesEnablementWorkspace, props()), /<button(?![^>]*disabled)[^>]*>Run live<\/button>/);
+  await harness.lifecycle.runLive(harness.session.input);
+  assert.deepEqual(calls.map((call) => call[1]), ["POST", "GET", "POST"]);
 });
 
 test("cooldown expiry re-enables the live failure view even while its error message remains", async (t) => {

@@ -40,7 +40,7 @@
       "required": ["id", "claim", "sourceIds", "evidenceClass", "confidence", "buyerImplication", "safeUse"],
       "properties": {
         "id": { "$ref": "#/$defs/text200" }, "claim": { "$ref": "#/$defs/text6000" },
-        "sourceIds": { "type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true, "items": { "$ref": "#/$defs/text200" } },
+        "sourceIds": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/$defs/text200" } },
         "evidenceClass": { "enum": ["verified_fact", "company_claim", "field_signal", "inference"] },
         "confidence": { "enum": ["high", "medium", "low"] },
         "buyerImplication": { "$ref": "#/$defs/text2000" }, "safeUse": { "$ref": "#/$defs/text2000" }
@@ -68,7 +68,7 @@
         "headline": { "$ref": "#/$defs/text500" },
         "bodyBullets": { "type": "array", "minItems": 1, "maxItems": 5, "items": { "$ref": "#/$defs/text1000" } },
         "speakerNotes": { "$ref": "#/$defs/text6000" },
-        "evidenceIds": { "type": "array", "maxItems": 20, "uniqueItems": true, "items": { "$ref": "#/$defs/text200" } },
+        "evidenceIds": { "type": "array", "maxItems": 20, "items": { "$ref": "#/$defs/text200" } },
         "proofState": { "enum": ["verified", "company_claim", "inference", "unresolved"] }
       }
     },

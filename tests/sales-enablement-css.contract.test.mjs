@@ -15,3 +15,9 @@ test("feature CSS uses Qianhui tokens and does not redefine the app sidebar", ()
   assert.doesNotMatch(css, /\.app-shell\s*\{/);
   assert.doesNotMatch(css, /grid-template-columns:\s*15rem/);
 });
+
+test("research rows keep their three-pixel keyboard focus outline inside the clipped container", () => {
+  const focusRule = css.match(/\.sales-enablement-shell\s+\.sales-workstreams\s+summary:focus-visible\s*\{([^}]*)\}/)?.[1] ?? "";
+  const inset = Number(focusRule.match(/outline-offset:\s*(-?\d+)px/)?.[1]);
+  assert.ok(inset <= -3, "The research row focus outline needs at least three pixels of inset clearance.");
+});

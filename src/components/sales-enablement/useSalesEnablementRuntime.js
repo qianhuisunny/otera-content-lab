@@ -59,7 +59,12 @@ export function createSalesEnablementLifecycle({ dispatch, storage, fetchImpl, s
       if (resumeId && run.id !== resumeId) throw new Error("Run identity mismatch.");
       publish("live-started", run);
       if (active(run)) await pollSalesEnablementRun(run.id, {
-        ...options, sleep, onUpdate: (update) => {
+        ...options, sleep,
+        onRetry: ({ retryAfterSeconds }) => {
+          if (isCurrent()) dispatch({ type: "polling-wait", requestId: id,
+            runId: run.id, retryAfterSeconds });
+        },
+        onUpdate: (update) => {
           if (update.id !== run.id) throw new Error("Run identity mismatch.");
           publish("live-updated", update);
         },

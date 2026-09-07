@@ -99,6 +99,23 @@ test("Example and stale timers cannot erase a provider cooldown deadline", (t) =
   assert.equal(ready.cooldown, null);
 });
 
+test("polling cooldown accepts only the current request and run identity", (t) => {
+  t.mock.method(Date, "now", () => 1000);
+  const creating = salesEnablementReducer(createSalesEnablementSession(), { type: "live-starting", requestId: "request-poll" });
+  const polling = salesEnablementReducer(creating, { type: "live-started", requestId: "request-poll",
+    run: { ...RETELL_SALES_ENABLEMENT_EXAMPLE_RUN, id: "resp_current123", status: "queued", artifact: null } });
+  const action = { type: "polling-wait", requestId: "request-poll", runId: "resp_current123", retryAfterSeconds: 10 };
+  const waiting = salesEnablementReducer(polling, action);
+  assert.deepEqual(waiting.cooldown, { until: 11000, requestId: "request-poll" });
+  assert.equal(waiting.requestStatus, "polling");
+  assert.equal(waiting.run, polling.run);
+  for (const patch of [{ requestId: "stale-request" }, { runId: "resp_other123" }]) {
+    assert.equal(salesEnablementReducer(polling, { ...action, ...patch }), polling);
+  }
+  const example = salesEnablementReducer(waiting, { type: "show-example" });
+  assert.equal(salesEnablementReducer(example, action), example);
+});
+
 test("late live updates cannot replace example mode or a newer run", () => {
   const firstRun = { ...RETELL_SALES_ENABLEMENT_EXAMPLE_RUN,
     id: "resp_first123", status: "queued", artifact: null };
