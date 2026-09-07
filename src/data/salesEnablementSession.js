@@ -1,12 +1,11 @@
 import { RETELL_SALES_ENABLEMENT_EXAMPLE_RUN } from "./salesEnablementExample.js";
 import { RETELL_SALES_ENABLEMENT_INPUT } from "./salesEnablementScenario.js";
-import { STAGE_IDS } from "./salesEnablementContract.js";
+import { SALES_ENABLEMENT_RESPONSE_ID, STAGE_IDS } from "./salesEnablementContract.js";
 
 export const RUN_INDEX_KEY = "content-lab:sales-enablement-runs:v1";
 
 const INDEX_VERSION = 1;
 const RUN_LIMIT = 10;
-const RUN_ID = /^resp_[A-Za-z0-9_-]{7,200}$/;
 const RUN_STATUSES = new Set(["queued", "in_progress", "completed", "failed"]);
 
 const isIsoTimestamp = (value) => typeof value === "string" &&
@@ -18,7 +17,7 @@ function parseRecord(value) {
   const keys = Object.keys(value);
   const expected = ["id", "workflowId", "companyId", "createdAt", "inputSummary", "status"];
   if (keys.length !== expected.length || keys.some((key) => !expected.includes(key))) return null;
-  if (!RUN_ID.test(value.id) || value.workflowId !== "sales-enablement" ||
+  if (!SALES_ENABLEMENT_RESPONSE_ID.test(value.id) || value.workflowId !== "sales-enablement" ||
       value.companyId !== "retell" || !isIsoTimestamp(value.createdAt) ||
       !RUN_STATUSES.has(value.status) || typeof value.inputSummary !== "string" ||
       value.inputSummary.length > 160) return null;
@@ -74,6 +73,7 @@ export function createSalesEnablementSession() {
     run: RETELL_SALES_ENABLEMENT_EXAMPLE_RUN,
     provider: { checked: false, configured: false, model: "gpt-5.6-sol" },
     requestStatus: "idle",
+    requestId: null,
     retryBlocked: false,
     error: null,
   };
@@ -92,20 +92,33 @@ export function salesEnablementReducer(state, action) {
   }
   if (action.type === "show-example") {
     return { ...state, mode: "example", run: RETELL_SALES_ENABLEMENT_EXAMPLE_RUN,
-      requestStatus: "idle", retryBlocked: false, error: null };
+      requestStatus: "idle", requestId: null, retryBlocked: false, error: null };
   }
   if (action.type === "live-starting") {
     return { ...state, mode: "live", requestStatus: "creating",
-      retryBlocked: false, error: null };
+      requestId: action.requestId ?? null, retryBlocked: false, error: null };
   }
-  if (action.type === "live-started" || action.type === "live-updated") {
+  if (action.type === "live-started") {
+    if ((action.requestId !== undefined && action.requestId !== state.requestId) ||
+        (action.requestId === undefined && state.requestId !== null)) return state;
     return { ...state, mode: "live", run: action.run,
       activeStepId: action.run.stageId,
       requestStatus: ["queued", "in_progress"].includes(action.run.status) ? "polling" : "idle",
       retryBlocked: Number(action.run.error?.retryAfterSeconds) > 0,
       error: action.run.error };
   }
+  if (action.type === "live-updated") {
+    if (state.mode !== "live" || state.run.id !== action.run.id ||
+        (action.requestId !== undefined && action.requestId !== state.requestId) ||
+        (action.requestId === undefined && state.requestId !== null)) return state;
+    return { ...state, run: action.run,
+      activeStepId: action.run.stageId,
+      requestStatus: ["queued", "in_progress"].includes(action.run.status) ? "polling" : "idle",
+      retryBlocked: Number(action.run.error?.retryAfterSeconds) > 0,
+      error: action.run.error };
+  }
   if (action.type === "request-failed") {
+    if (action.requestId !== undefined && action.requestId !== state.requestId) return state;
     return { ...state, requestStatus: "idle", error: action.error,
       retryBlocked: Number(action.error?.retryAfterSeconds) > 0 };
   }

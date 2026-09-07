@@ -1,4 +1,5 @@
 import {
+  SALES_ENABLEMENT_RESPONSE_ID,
   TERMINAL_RUN_STATUSES,
   validatePublicSalesEnablementRun,
 } from "./salesEnablementContract.js";
@@ -65,7 +66,7 @@ export async function createSalesEnablementRun(input, { fetchImpl = fetch, signa
 }
 
 export async function retrieveSalesEnablementRun(id, { fetchImpl = fetch, signal } = {}) {
-  if (!/^resp_[A-Za-z0-9_-]{8,200}$/.test(id)) {
+  if (!SALES_ENABLEMENT_RESPONSE_ID.test(id)) {
     throw new TypeError("Invalid sales enablement run ID.");
   }
   return validatePublicSalesEnablementRun(await responseJson(await fetchImpl(
@@ -87,7 +88,9 @@ export async function pollSalesEnablementRun(id, {
       await sleep(error.retryAfterSeconds * 1000, signal);
       continue;
     }
+    throwIfAborted(signal);
     onUpdate(run);
+    throwIfAborted(signal);
     if (TERMINAL_RUN_STATUSES.includes(run.status)) return run;
     await sleep(delays[Math.min(attempt, delays.length - 1)], signal);
     attempt += 1;

@@ -4,6 +4,7 @@ export const WORKSTREAM_IDS = Object.freeze([
 ]);
 export const STAGE_IDS = Object.freeze(["scope", "research", "narrative", "asset", "review"]);
 export const TERMINAL_RUN_STATUSES = Object.freeze(["completed", "failed"]);
+export const SALES_ENABLEMENT_RESPONSE_ID = /^resp_[A-Za-z0-9_-]{8,200}$/;
 
 const STAGES = Object.freeze(["discovery", "demo", "evaluation", "proposal"]);
 const BUYERS = Object.freeze([
@@ -284,7 +285,7 @@ const validateError = (value) => {
 export function validatePublicSalesEnablementRun(value) {
   exactKeys(value, ["id", "workflowId", "companyId", "status", "stageId", "stages", "createdAt", "updatedAt", "workstreams", "artifact", "error"], "public sales enablement run");
   const id = text(value.id, "run ID", 210);
-  if (id !== "example_retell_sales_deck_v1" && !/^resp_[A-Za-z0-9_-]{8,200}$/.test(id)) invalid("Invalid sales enablement run ID.");
+  if (id !== "example_retell_sales_deck_v1" && !SALES_ENABLEMENT_RESPONSE_ID.test(id)) invalid("Invalid sales enablement run ID.");
   if (value.workflowId !== "sales-enablement" || value.companyId !== "retell") invalid("Unsupported sales enablement workflow.");
   const status = enumValue(value.status, RUN_STATUSES, "run status");
   const stages = array(value.stages, "run stages", 5).map(validateStage);

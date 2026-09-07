@@ -65,6 +65,21 @@ test("the client preserves retry-after metadata and polling propagates cancellat
   );
 });
 
+test("polling does not publish a terminal run after cancellation during retrieval", async () => {
+  const controller = new AbortController();
+  const updates = [];
+  let resolveResponse;
+  const polling = pollSalesEnablementRun("resp_status123", {
+    signal: controller.signal,
+    fetchImpl: () => new Promise((resolve) => { resolveResponse = resolve; }),
+    onUpdate: (run) => updates.push(run),
+  });
+  controller.abort(new DOMException("cancelled", "AbortError"));
+  resolveResponse(Response.json(RETELL_SALES_ENABLEMENT_EXAMPLE_RUN));
+  await assert.rejects(polling, (error) => error.name === "AbortError");
+  assert.deepEqual(updates, []);
+});
+
 test("polling honors server retry-after before retrying a status request", async () => {
   let calls = 0;
   const waits = [];
