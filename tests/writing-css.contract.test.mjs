@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const stylesheet = stripComments(
-  await readFile(new URL("../src/writing.css", import.meta.url), "utf8"),
+  (await Promise.all([
+    readFile(new URL("../src/styles.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/writing.css", import.meta.url), "utf8"),
+  ])).join("\n"),
 );
 const authorRules = parseRules(stylesheet).map((rule, order) => ({
   ...rule,
@@ -157,21 +160,32 @@ test("hidden Activity and Research panels compute to display none", () => {
     );
   }
 });
-test("the review layout stacks at tablet widths without changing desktop or mobile behavior", () => {
-  const layout = { attributes: [], classes: ["review-layout"] };
-  const coverage = { attributes: [], classes: ["coverage-panel"] };
-
-  assert.equal(computedProperty(layout, "grid-template-columns", 820), "1fr");
-  assert.equal(computedProperty(coverage, "position", 820), "static");
+test("the desktop workspace matches the approved 240px sidebar split", () => {
+  const shell = { attributes: [], classes: ["app-shell"] };
 
   assert.equal(
-    computedProperty(layout, "grid-template-columns", 960),
-    "minmax(0, 1fr) minmax(15rem, 19rem)",
+    computedProperty(shell, "grid-template-columns", 1470),
+    "15rem minmax(0, 1fr)",
   );
-  assert.equal(computedProperty(coverage, "position", 960), "sticky");
+});
 
-  assert.equal(computedProperty(layout, "grid-template-columns", 640), "1fr");
-  assert.equal(computedProperty(coverage, "position", 640), "static");
+test("the automatic Inspector uses the approved desktop split and stacks below it", () => {
+  const layout = {
+    attributes: ["data-has-inspector"],
+    classes: ["writing-shell"],
+  };
+  const inspector = { attributes: ["data-writing-inspector"], classes: ["writing-inspector"] };
+
+  assert.equal(
+    computedProperty(layout, "grid-template-columns", 1470),
+    "minmax(0, 36.5625rem) minmax(0, 1fr)",
+  );
+  assert.equal(computedProperty(inspector, "position", 1470), "sticky");
+
+  for (const viewportWidth of [1100, 820, 640]) {
+    assert.equal(computedProperty(layout, "grid-template-columns", viewportWidth), "1fr");
+    assert.equal(computedProperty(inspector, "position", viewportWidth), "static");
+  }
 });
 
 test("empty and browser-cleared editor surfaces expose their data-placeholder text", () => {

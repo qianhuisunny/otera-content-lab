@@ -7,7 +7,7 @@ export function CoveragePanel({ items = COVERAGE_ITEMS }) {
   const coveredCount = items.filter((item) => item.covered).length;
 
   return (
-    <aside aria-labelledby="coverage-title" className="coverage-panel">
+    <section aria-labelledby="coverage-title" className="coverage-panel">
       <div className="coverage-score">
         <ChartDonut aria-hidden="true" size={34} weight="duotone" />
         <div>
@@ -36,6 +36,6 @@ export function CoveragePanel({ items = COVERAGE_ITEMS }) {
           </li>
         ))}
       </ul>
-    </aside>
+    </section>
   );
 }

@@ -3,6 +3,7 @@ import { BriefStep } from "./BriefStep.jsx";
 import { DraftStep } from "./DraftStep.jsx";
 import { OutlineStep } from "./OutlineStep.jsx";
 import { ReviewStep } from "./ReviewStep.jsx";
+import { WritingInspector } from "./WritingInspector.jsx";
 import { WRITING_SCENARIO } from "../../data/writingScenario.js";
 
 export function focusWritingHeadingOnEntry(workspace) {
@@ -30,6 +31,11 @@ export function WritingWorkspace({ session, dispatch, scenario = WRITING_SCENARI
   const previousStepRef = useRef(session.currentStep);
   const advance = () => dispatch({ type: "advance-step" });
   const goTo = (step) => dispatch({ type: "go-to-step", step });
+  const inspectorMode = session.currentStep === "outline"
+    ? "outline"
+    : session.currentStep === "review"
+      ? "review"
+      : null;
 
   useEffect(() => {
     focusWritingHeadingAfterStepChange(
@@ -61,7 +67,6 @@ export function WritingWorkspace({ session, dispatch, scenario = WRITING_SCENARI
     screen = (
       <ReviewStep
         articleHtml={session.articleHtml}
-        coverageItems={scenario.coverageItems}
         dispatch={dispatch}
       />
     );
@@ -77,8 +82,15 @@ export function WritingWorkspace({ session, dispatch, scenario = WRITING_SCENARI
   }
 
   return (
-    <div className="writing-workspace" ref={workspaceRef}>
-      {screen}
+    <div
+      className="writing-workspace writing-shell"
+      data-has-inspector={Boolean(inspectorMode)}
+      ref={workspaceRef}
+    >
+      <div className="writing-detail">{screen}</div>
+      {inspectorMode ? (
+        <WritingInspector items={scenario.coverageItems} mode={inspectorMode} />
+      ) : null}
     </div>
   );
 }

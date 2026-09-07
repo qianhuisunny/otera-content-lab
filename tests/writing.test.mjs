@@ -301,7 +301,7 @@ test("research export cleans the temporary link after a click failure", async (t
   });
 });
 
-test("review screen renders an editable article toolbar and read-only coverage", async (t) => {
+test("review screen renders the editor without embedding the workspace inspector", async (t) => {
   await withVite(t, async (vite) => {
     const { ReviewStep } = await vite.ssrLoadModule("/src/components/writing/ReviewStep.jsx");
     const markup = renderToStaticMarkup(
@@ -314,8 +314,7 @@ test("review screen renders an editable article toolbar and read-only coverage",
       assert.ok(markup.includes(label), `${label} must be rendered`);
     }
     assert.match(markup, /contenteditable="true"/i);
-    assert.match(markup, /Coverage/);
-    assert.match(markup, /independent customer evidence/i);
+    assert.doesNotMatch(markup, /data-writing-inspector|Coverage/);
     assert.doesNotMatch(markup, /Highlight any passage|leave a note|agent applies your notes/i);
   });
 });
@@ -361,6 +360,49 @@ test("Writing workspace wires all four screens to the approved session", async (
         React.createElement(WritingWorkspace, { session, dispatch: () => {} }),
       );
       assert.match(markup, new RegExp(expected.replace(/[&]/g, "&amp;")));
+    }
+  });
+});
+
+test("Writing workspace derives the Inspector from the active step", async (t) => {
+  await withVite(t, async (vite) => {
+    const { WritingWorkspace } = await vite.ssrLoadModule(
+      "/src/components/writing/WritingWorkspace.jsx",
+    );
+    const cases = [
+      ["brief", false, null],
+      ["outline", true, "LLM as a Judge"],
+      ["draft", false, null],
+      ["review", true, "Coverage"],
+    ];
+
+    for (const [step, hasInspector, inspectorTitle] of cases) {
+      const session = {
+        ...createWritingSession(),
+        currentStep: step,
+        furthestStepIndex: 3,
+      };
+      const markup = renderToStaticMarkup(
+        React.createElement(WritingWorkspace, { session, dispatch: () => {} }),
+      );
+
+      assert.match(
+        markup,
+        new RegExp(`data-has-inspector="${hasInspector}"`),
+        `${step} must expose its automatic Inspector layout state`,
+      );
+
+      if (hasInspector) {
+        assert.match(markup, /<aside[^>]*data-writing-inspector/);
+        assert.match(markup, new RegExp(inspectorTitle));
+      } else {
+        assert.doesNotMatch(markup, /data-writing-inspector/);
+      }
+
+      assert.doesNotMatch(
+        markup,
+        /Open inspector|Show inspector|Hide inspector|Toggle inspector/i,
+      );
     }
   });
 });
