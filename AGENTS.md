@@ -33,3 +33,16 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Keep company selection separate from the primary Context/Workflow view navigation and build it from the registered `SegmentedControl` component.
 - Derive Retell persona count and boundaries from ICP and buying-committee evidence. Do not force Retell into Otera's seven-persona structure.
 - Generate every company context through all four canonical prompt stages: `The company context.md` first; `About the founder.md` and `About the market.md` next using the verified company output; then `About the audience.md` using all three verified prior outputs. Preserve all four raw run outputs and never replace this sequence with ad hoc synthesis.
+
+## Approved Sales Enablement exception
+
+- The Retell `Sales Enablement Deck` flow may use the focused Node/Vercel
+  `/api/sales-enablement/runs` create/retrieve backend approved on 2026-09-06.
+- It may persist only a sanitized browser run index; OpenAI's stored Response is
+  the temporary authoritative run record. It does not add a database, queue,
+  authentication, publishing, CRM writes, or shared history.
+- This exception does not change the existing Writing workspace: Writing stays
+  frontend-only and in-memory, and `/api/writing/generate` keeps its current
+  contract.
+- New Skill judgment belongs in `skills/sales-enablement`; React renders its
+  manifest and public run state rather than maintaining duplicate prompts.

@@ -30,6 +30,32 @@ The Sites Worker, metadata and build contract are preserved unchanged. Sites clo
 
 Generation is callable by visitors to the deployed app once an API key is configured. Same-origin checks, an 80 KB request limit, bounded output tokens, and **instance-local** rate/concurrency limits reduce accidental abuse but do **not** provide authentication, a durable global quota, or a hard spending cap. Serverless instances do not share the limiter, and non-browser callers can omit Origin. Use a dedicated OpenAI project/key and review provider usage/billing. Before exposing this to untrusted users, configure access protection and a durable quota/rate limit. This change does not silently introduce a new authentication system.
 
+## Sales Enablement runs
+
+`POST /api/sales-enablement/runs` is a same-origin create endpoint. It validates
+the selected Retell workflow and returns `202 Accepted` with a normalized public
+run. `GET /api/sales-enablement/runs/:responseId` is the same-origin retrieval
+endpoint and returns `200 OK` with the latest normalized public run. The client
+never receives provider prompts, API credentials, lane packets, agent messages,
+or raw reasoning content.
+
+The server makes one OpenAI Responses request with
+`OpenAI-Beta: responses_multi_agent=v1`, `background: true`, and `store: true`.
+It defaults to `gpt-5.6-sol` unless `OPENAI_SALES_ENABLEMENT_MODEL` overrides
+it. There is no automatic create retry and no single-agent fallback.
+
+All 24 local Retell Markdown files are loaded and routed through the canonical
+Skill package. The browser receives only normalized source records and public
+run data. OpenAI's stored Response is authoritative for the temporary run;
+browser storage is only a sanitized ten-record index and is not durable.
+Clearing browser storage or provider retention expiry can make a prior run
+unavailable. Retrieval is unauthenticated, and the serverless limiter is
+instance-local, so authenticated ownership checks and durable quotas are
+required before public or team use.
+
+Sites remains a static preview: Example mode works there, but the live Node API
+requires the Vercel or local backend.
+
 ## Verification
 
 `npm test` covers input isolation, actual HTTP routing, provider request construction, response parsing, safe errors, timeouts/cancellation, source selection, Markdown safety and stale-result handling. Provider responses are mocked in automated tests, not in the shipped runtime. `npm run build` and `npm run test:sites` verify coexistence with Sites. After deployment, check the main commit's Vercel status, `/api/health`, page loading, and the unconfigured error; perform a real outline and draft after adding the key.

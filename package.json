@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",
-    "test": "node --test tests/content.test.mjs tests/writing.test.mjs tests/writing-css.contract.test.mjs tests/writing-final-cleanup.test.mjs tests/writing-api.test.mjs tests/writing-generation.test.mjs tests/vercel-backend.test.mjs",
+    "test": "node --test tests/content.test.mjs tests/writing.test.mjs tests/writing-css.contract.test.mjs tests/writing-final-cleanup.test.mjs tests/writing-api.test.mjs tests/writing-generation.test.mjs tests/vercel-backend.test.mjs tests/sales-enablement-manifest.test.mjs tests/sales-enablement-contract.test.mjs tests/sales-enablement-context.test.mjs tests/sales-enablement-provider.test.mjs tests/sales-enablement-api.test.mjs tests/sales-enablement-state.test.mjs tests/sales-enablement-client.test.mjs tests/sales-enablement-ui.test.mjs tests/sales-enablement-css.contract.test.mjs tests/sales-enablement-docs.test.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs"
   },
   "dependencies": {
