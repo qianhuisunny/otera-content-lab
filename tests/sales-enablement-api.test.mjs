@@ -43,6 +43,8 @@ const spawnItems = (id) => [{
 }];
 
 test("raw provider execution evidence survives API normalization and client validation truthfully", async (t) => {
+  // Removing terminal reconciliation must fail the completed spawn/activity cases;
+  // accepting artifact-only promotion must fail the missing-execution cases.
   const cases = [
     ["root artifact only", () => [], "failed", "queued"],
     ["missing call outputs", (id) => spawnItems(id).slice(0, 1), "failed", "queued"],
@@ -69,11 +71,18 @@ test("raw provider execution evidence survives API normalization and client vali
       type: "agent_message", id: "amsg_" + id, author: "/root", recipient: "/root/" + id,
       agent: { agent_name: "/root/" + id }, content: [{ type: "encrypted_content", encrypted_content: "PRIVATE_MESSAGE" }],
     }], "failed", "queued"],
-    ["successful spawn results do not certify lane completion", spawnItems, "completed", "running"],
+    ["completed provider reconciles successful spawn results", spawnItems, "completed", "complete"],
     ["child-authored encrypted activity", (id) => [{
       type: "agent_message", id: "amsg_" + id, author: "/root/" + id, recipient: "/root",
       agent: { agent_name: "/root" }, content: [{ type: "encrypted_content", encrypted_content: "PRIVATE_MESSAGE" }],
-    }], "completed", "running"],
+    }], "completed", "complete"],
+    ["in-progress provider keeps successful spawns running", spawnItems, "in_progress", "running", "in_progress"],
+    ["queued provider keeps successful spawns running", spawnItems, "queued", "running", "queued"],
+    ["completed provider preserves a failed child while completing executed siblings", (id) =>
+      id === "company_positioning" ? [{
+        type: "message", phase: "final_answer", status: "incomplete", agent: { agent_name: "/root/" + id },
+        content: [{ type: "output_text", text: "PRIVATE_FAILED_RESEARCH" }],
+      }] : spawnItems(id), "completed", ["failed", "complete", "complete", "complete", "complete", "complete", "complete"]],
     ["actual completed children", (id) => [{
       type: "message", phase: "final_answer", status: "completed", agent: { agent_name: "/root/" + id },
       content: [{ type: "output_text", text: "PRIVATE_RESEARCH" }],
@@ -83,9 +92,9 @@ test("raw provider execution evidence survives API normalization and client vali
       content: [{ type: "output_text", text: "PRIVATE_FAILED_RESEARCH" }],
     }], "completed", "failed"],
   ];
-  for (const [name, childItems, status, laneStatus] of cases) await t.test(name, async () => {
+  for (const [name, childItems, status, laneStatus, providerStatus = "completed"] of cases) await t.test(name, async () => {
     const raw = {
-      id: "resp_evidence123", status: "completed", created_at: 1788652800,
+      id: "resp_evidence123", status: providerStatus, created_at: 1788652800,
       output: [...workflow.workstreams.flatMap(({ id }) => childItems(id)), {
         type: "message", phase: "final_answer", status: "completed", role: "assistant",
         agent: { agent_name: "/root" }, content: [{ type: "output_text",
@@ -100,13 +109,17 @@ test("raw provider execution evidence survives API normalization and client vali
       }),
     });
     assert.equal(run.status, status);
-    assert.ok(run.workstreams.every((lane) => lane.status === laneStatus));
+    if (Array.isArray(laneStatus)) assert.deepEqual(run.workstreams.map((lane) => lane.status), laneStatus);
+    else assert.ok(run.workstreams.every((lane) => lane.status === laneStatus));
     if (status === "failed") {
       assert.equal(run.error.code, "MULTI_AGENT_INCOMPLETE");
       assert.equal(run.artifact, null);
-    } else {
+    } else if (status === "completed") {
+      assert.ok(run.workstreams.every((lane) => ["complete", "failed"].includes(lane.status)));
       assert.equal(run.artifact.slides.length, 11);
       assert.deepEqual(run.artifact.review.blockingGaps, RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact.review.blockingGaps);
+    } else {
+      assert.equal(run.artifact, null);
     }
     assert.doesNotMatch(JSON.stringify(run), /PRIVATE_|call_id|multi_agent_call|agent_message|agent_name/);
   });

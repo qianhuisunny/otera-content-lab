@@ -226,6 +226,10 @@ function normalizeProviderResponse(response, workflow) {
     } else try {
       artifact = validateSalesEnablementArtifact(
         JSON.parse(rootFinalText(response.output ?? [])));
+      // Provider termination reconciles proven execution only after valid synthesis.
+      for (const id of executedAgents) {
+        if (activity.get(id) !== "failed") activity.set(id, "complete");
+      }
     } catch {
       publicStatus = "failed";
       error = {
