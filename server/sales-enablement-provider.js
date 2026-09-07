@@ -166,12 +166,16 @@ function normalizeProviderResponse(response, workflow) {
     const agent = typeof agentPath === "string" && agentPath.startsWith("/root/") ?
       workstreamName(agentPath, workflow) : null;
     if (agent) seenAgents.add(agent);
-    if (agent && activity.get(agent) !== "failed" &&
-        item?.type === "message" && item?.phase === "final_answer") {
-      activity.set(agent, "complete");
-    }
-    if (agent && item?.status === "failed") {
+    if (agent && (item?.status === "failed" ||
+        (item?.type === "message" && item.status === "incomplete"))) {
       activity.set(agent, "failed");
+    } else if (agent && activity.get(agent) !== "failed" && item?.type === "message") {
+      if (item.status === "in_progress") {
+        activity.set(agent, "running");
+      } else if (item.phase === "final_answer" &&
+          (item.status === "completed" || item.status === undefined)) {
+        activity.set(agent, "complete");
+      }
     }
   }
   let artifact = null;

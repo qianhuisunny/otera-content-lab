@@ -97,6 +97,39 @@ test("a failed lane remains failed when later output repeats spawn or final-mess
   assert.equal(run.workstreams[0].status, "failed");
 });
 
+test("an incomplete child final message stays failed after valid root synthesis", async () => {
+  const { workflow } = await loadSalesEnablementBundle();
+  const provider = completedResponse(workflow);
+  provider.output[0].status = "incomplete";
+  provider.output[0].content = [{ type: "output_text", text: "PRIVATE_TRUNCATED_RESEARCH" }];
+  const run = normalizeSalesEnablementResponse(provider, workflow);
+  assert.equal(run.status, "completed");
+  assert.equal(run.workstreams[0].status, "failed");
+  assert.equal(run.artifact.slides.length, 11);
+  assert.deepEqual(validatePublicSalesEnablementRun(run), run);
+  assert.doesNotMatch(JSON.stringify(run), /PRIVATE_TRUNCATED_RESEARCH/);
+});
+
+test("an in-progress child final message stays running until its completed polling snapshot", async () => {
+  const { workflow } = await loadSalesEnablementBundle();
+  const provider = {
+    id: "resp_polling123", status: "in_progress", created_at: 1788652800,
+    output: [{
+      type: "message", phase: "final_answer", status: "in_progress",
+      agent: { agent_name: "/root/company_positioning" },
+      content: [{ type: "output_text", text: "PRIVATE_PARTIAL_RESEARCH" }],
+    }],
+  };
+  const pending = normalizeSalesEnablementResponse(provider, workflow);
+  assert.equal(pending.workstreams[0].status, "running");
+  assert.equal(pending.artifact, null);
+  assert.doesNotMatch(JSON.stringify(pending), /PRIVATE_PARTIAL_RESEARCH/);
+  provider.output[0].status = "completed";
+  const finished = normalizeSalesEnablementResponse(provider, workflow);
+  assert.equal(finished.workstreams[0].status, "complete");
+  assert.deepEqual(validatePublicSalesEnablementRun(finished), finished);
+});
+
 test("only root final JSON is read and raw private output is never serialized", async () => {
   const { workflow } = await loadSalesEnablementBundle();
   const provider = completedResponse(workflow);
