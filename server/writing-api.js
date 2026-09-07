@@ -118,7 +118,19 @@ export async function handleApiRequest(request, {
   const configured = Boolean(env.OPENAI_API_KEY?.trim());
   if (url.pathname === "/api/health") {
     if (request.method !== "GET") return fail(405, "METHOD_NOT_ALLOWED", "Use GET.", { Allow: "GET" });
-    return json({ status: "ok", provider: "openai", configured, model: env.OPENAI_MODEL?.trim() || DEFAULT_MODEL });
+    return json({
+      status: "ok", provider: "openai", configured, model: env.OPENAI_MODEL?.trim() || DEFAULT_MODEL,
+      features: {
+        writing: {
+          configured,
+          model: env.OPENAI_MODEL?.trim() || DEFAULT_MODEL,
+        },
+        salesEnablement: {
+          configured,
+          model: env.OPENAI_SALES_ENABLEMENT_MODEL?.trim() || "gpt-5.6-sol",
+        },
+      },
+    });
   }
   if (url.pathname !== "/api/writing/generate") return fail(404, "NOT_FOUND", "This API endpoint does not exist.");
   if (request.method !== "POST") return fail(405, "METHOD_NOT_ALLOWED", "Use POST.", { Allow: "POST" });

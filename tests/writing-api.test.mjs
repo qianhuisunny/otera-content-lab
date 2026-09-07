@@ -32,6 +32,10 @@ test("health distinguishes a deployed backend from a configured provider without
     const body = await response.json();
     assert.equal(body.configured, configured);
     assert.equal(body.provider, "openai");
+    assert.deepEqual(body.features.salesEnablement, {
+      configured,
+      model: "gpt-5.6-sol",
+    });
     assert.ok(!JSON.stringify(body).includes("never-return-this"));
   }
 });
