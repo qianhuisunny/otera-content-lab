@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add one production-shaped example showing how Altaira can render a reusable marketing Skill as a guided UI and execute the same source through an OpenAI Responses Multi-agent harness. The example uses Corey Haines's MIT-licensed `sales-enablement` Skill to create a Retell AI executive/champion sales deck.
+Add one production-shaped example showing how Content Lab can render a reusable marketing Skill as a guided UI and execute the same source through an OpenAI Responses Multi-agent harness. The example uses Corey Haines's MIT-licensed `sales-enablement` Skill to create a Retell AI executive/champion sales deck.
 
 The implementation must demonstrate one source of truth rather than a second set of page prompts:
 
@@ -25,7 +25,7 @@ The demo uses only the sales-deck path:
 - `evals/evals.json` provides reusable assertions for deck completeness and buyer tailoring;
 - Retell's existing company, market, ICP, persona, founder, and claim-ledger material supplies the initial product-marketing evidence pack.
 
-The upstream source remains recognizable and separately attributed. Altaira-specific orchestration and UI metadata live beside it rather than being inserted into React components.
+The upstream source remains recognizable and separately attributed. Content Lab-specific orchestration and UI metadata live beside it rather than being inserted into React components.
 
 ## Skill package contract
 
@@ -36,6 +36,7 @@ skills/sales-enablement/
 ├── SKILL.md
 ├── LICENSE
 ├── workflow.json
+├── context-sources.json
 ├── references/
 │   ├── deck-frameworks.md
 │   └── research-orchestration.md
@@ -46,7 +47,7 @@ skills/sales-enablement/
     └── evals.json
 ```
 
-`workflow.json` is Altaira's adapter contract. It contains stable IDs, short UI labels, section references, required inputs, execution configuration, and output-view metadata. It must not contain rewritten versions of the Skill's prose instructions.
+`workflow.json` is Content Lab's adapter contract. It contains stable IDs, short UI labels, section references, required inputs, execution configuration, and output-view metadata. It must not contain rewritten versions of the Skill's prose instructions.
 
 Each manifest stage points to its governing source:
 
@@ -75,6 +76,31 @@ The initial example is a Retell AI executive/champion deck for a production AI v
 - known objections: implementation risk, compliance uncertainty, reliability, and total operating cost.
 
 These defaults are demo input data, not additional instructions. Existing Retell Markdown files remain the evidence source. Any public live research is treated as untrusted reference material and must retain URL provenance and an as-of date.
+
+## Complete Retell context ingestion
+
+The run must use the complete existing Retell corpus, not only the five display summaries. At implementation time that corpus contains 24 Markdown files:
+
+- all 12 files in `content/retell/`: company, founder, market, ICP, persona index, and all seven persona dossiers;
+- all 12 files in `research/retell/`: four raw research outputs, consolidated report source, claim ledger, four gap matrices, persona decisions, and prompt provenance.
+
+`context-sources.json` inventories every Retell source with a stable ID, repository path, source type, and one or more research lanes. Tests compare the manifest to both directories so a current file cannot be silently omitted and a future file forces an explicit routing decision.
+
+“Use all context” does not mean concatenating every file into every agent prompt. The server routes the corpus deliberately:
+
+| Research lane | Primary Retell context |
+| --- | --- |
+| Company and positioning | Company context and raw company research, founder context and raw founder research, consolidated report |
+| Product and technical fit | Company/product research, Technical Owner, Agent Builder, Conversation Quality Owner, Governance Approver, partner/platform dossier |
+| Executive buyer | ICP, persona index, Executive Sponsor, Workflow Owner, audience research |
+| Technical buyer | Technical Owner, Agent Builder, Conversation Quality Owner, Governance Approver, partner/platform dossier, audience research |
+| Market and alternatives | Market context, raw market research, market gap matrix, relevant company research |
+| Proof and claims | Claim ledger, report source, customer evidence in the raw outputs, and all gap matrices |
+| Skeptical review | Claim ledger, prompt provenance, persona decisions, all gap matrices, and the other agents' structured findings |
+
+Every corpus file is routed to at least one lane; high-value files may serve several. The root agent receives the complete source inventory and the structured findings from all lanes. `prompt-provenance.md` is control metadata describing how prior research was produced, not evidence for a market or product claim. Gap matrices and “known unknowns” are first-class inputs so the deck can say what is unsafe to claim.
+
+This context is materially useful: it supplies the seller baseline, buyer distinctions, customer language, proof posture, open gaps, and Retell-specific writing rules that the generic upstream Skill intentionally does not contain. Live web research refreshes or closes named gaps; it does not replace the local corpus.
 
 ## Multi-agent research plan
 
@@ -140,7 +166,7 @@ The provider request uses a dedicated supported model environment variable with 
 
 ### Retrieve
 
-The retrieve operation validates the response ID, asks OpenAI for the stored Response, and translates provider output into Altaira's public run contract. It returns only the fields needed by the UI:
+The retrieve operation validates the response ID, asks OpenAI for the stored Response, and translates provider output into Content Lab's public run contract. It returns only the fields needed by the UI:
 
 - run status and timestamps;
 - current workflow stage;
@@ -232,7 +258,7 @@ Browser verification covers the Workflow entry, five-stage navigation, example r
 
 ## Expected files in scope
 
-- Create `skills/sales-enablement/**` with upstream attribution and Altaira adapter files.
+- Create `skills/sales-enablement/**` with upstream attribution and Content Lab adapter files.
 - Create sales-enablement data, reducer, API client, fixtures, and workspace components under `src/`.
 - Create a focused server handler and Vercel API adapters for create/retrieve.
 - Extend the local Vite API adapter for the two operations.
@@ -257,7 +283,7 @@ Existing dirty worktree changes are user-owned and must be preserved. In particu
 
 ## Migration path
 
-If Altaira later needs authenticated history or independently retryable specialists, replace the run adapter behind the same public contract:
+If Content Lab later needs authenticated history or independently retryable specialists, replace the run adapter behind the same public contract:
 
 ```text
 Current: UI → thin API → stored OpenAI Response
