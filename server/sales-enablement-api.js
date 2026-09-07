@@ -13,6 +13,14 @@ const createInstanceGate = createLimiter({ limit: 3, windowMs: 60000, maxConcurr
 const statusInstanceGate = createLimiter({ limit: 60, windowMs: 60000, maxConcurrent: 10 });
 const RUN_PATH = /^\/api\/sales-enablement\/runs\/(resp_[A-Za-z0-9_-]{8,200})$/;
 
+class SalesEnablementApiError extends Error {
+  constructor(status, code, message) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
 const json = (body, status = 200, headers = {}) => Response.json(body, {
   status,
   headers: {
@@ -28,14 +36,11 @@ const fail = (status, code, message, retryAfterSeconds = null, headers = {}) =>
 
 async function readBoundedJson(request, signal) {
   if (Number(request.headers.get("content-length")) > 32000) {
-    throw Object.assign(new Error("The sales brief is too large."), {
-      status: 413, code: "TOO_LARGE",
-    });
+    throw new SalesEnablementApiError(413, "TOO_LARGE", "The sales brief is too large.");
   }
   const reader = request.body?.getReader();
-  if (!reader) throw Object.assign(new Error("A JSON request body is required."), {
-    status: 400, code: "INVALID_INPUT",
-  });
+  if (!reader) throw new SalesEnablementApiError(
+    400, "INVALID_INPUT", "A JSON request body is required.");
   const chunks = [];
   let bytes = 0;
   const cancel = () => { void reader.cancel(signal.reason).catch(() => {}); };
@@ -47,13 +52,12 @@ async function readBoundedJson(request, signal) {
       if (done) break;
       bytes += value.byteLength;
       if (bytes > 32000) {
-        void reader.cancel();
-        throw Object.assign(new Error("The sales brief is too large."), {
-          status: 413, code: "TOO_LARGE",
-        });
+        void reader.cancel().catch(() => {});
+        throw new SalesEnablementApiError(413, "TOO_LARGE", "The sales brief is too large.");
       }
       chunks.push(value);
     }
+    signal.throwIfAborted();
     const buffer = new Uint8Array(bytes);
     let offset = 0;
     for (const chunk of chunks) {
@@ -62,9 +66,7 @@ async function readBoundedJson(request, signal) {
     }
     try { return JSON.parse(new TextDecoder().decode(buffer)); }
     catch {
-      throw Object.assign(new Error("Send a valid JSON request."), {
-        status: 400, code: "INVALID_JSON",
-      });
+      throw new SalesEnablementApiError(400, "INVALID_JSON", "Send a valid JSON request.");
     }
   } finally {
     signal.removeEventListener("abort", cancel);
@@ -109,31 +111,35 @@ export async function handleSalesEnablementApiRequest(request, {
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = AbortSignal.any([timeout, request.signal]);
   let input = null;
-  if (isCreate) {
-    if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !==
-        "application/json") {
-      return fail(415, "UNSUPPORTED_MEDIA_TYPE", "Send application/json.");
-    }
-    try {
-      input = validateSalesEnablementInput(await readBoundedJson(request, signal));
-    } catch (error) {
-      return fail(error.status ?? 400, error.code ?? "INVALID_INPUT", error.message);
-    }
-  }
-  if (!env.OPENAI_API_KEY?.trim()) {
-    return fail(503, "NOT_CONFIGURED",
-      "Live Sales Enablement is not configured. Example run stays available.");
-  }
-  const client = env.VERCEL ?
-    request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim() ||
-      "unknown" : "local";
-  const gate = isCreate ? createGate : statusGate;
-  const release = gate.acquire(client);
-  if (!release) {
-    return fail(429, "RATE_LIMITED",
-      "Too many requests. Please wait and retry.", 60);
-  }
+  let release;
   try {
+    if (isCreate) {
+      if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !==
+          "application/json") {
+        return fail(415, "UNSUPPORTED_MEDIA_TYPE", "Send application/json.");
+      }
+      const body = await readBoundedJson(request, signal);
+      try {
+        input = validateSalesEnablementInput(body);
+      } catch (error) {
+        if (error instanceof SalesEnablementApiError) throw error;
+        throw new SalesEnablementApiError(400, "INVALID_INPUT",
+          "Check the sales brief and try again.");
+      }
+    }
+    if (!env.OPENAI_API_KEY?.trim()) {
+      return fail(503, "NOT_CONFIGURED",
+        "Live Sales Enablement is not configured. Example run stays available.");
+    }
+    const client = env.VERCEL ?
+      request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim() ||
+        "unknown" : "local";
+    const gate = isCreate ? createGate : statusGate;
+    release = gate.acquire(client);
+    if (!release) {
+      return fail(429, "RATE_LIMITED",
+        "Too many requests. Please wait and retry.", 60);
+    }
     if (isCreate) {
       const bundle = await loadBundle();
       signal.throwIfAborted();
@@ -155,6 +161,9 @@ export async function handleSalesEnablementApiRequest(request, {
     if (timeout.aborted) {
       return fail(504, "TIMEOUT", "The provider request timed out.");
     }
+    if (error instanceof SalesEnablementApiError) {
+      return fail(error.status, error.code, error.message);
+    }
     if (error instanceof SalesEnablementProviderError) {
       return fail(error.status, error.code, error.message,
         error.retryAfterSeconds);
@@ -162,6 +171,6 @@ export async function handleSalesEnablementApiRequest(request, {
     return fail(502, "RUN_FAILED",
       "The sales enablement run could not be processed.");
   } finally {
-    release();
+    release?.();
   }
 }

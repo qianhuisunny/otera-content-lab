@@ -124,3 +124,73 @@ test("the run endpoints advertise the only allowed method", async () => {
   assert.equal(status.status, 405);
   assert.equal(status.headers.get("allow"), "GET");
 });
+
+test("body ingestion honors pre-aborted and pending-read cancellation signals", async () => {
+  const preAborted = new AbortController();
+  preAborted.abort(new DOMException("abort-secret-sentinel", "AbortError"));
+  const beforeRead = await handleSalesEnablementApiRequest(createRequest(undefined, {
+    signal: preAborted.signal,
+  }), { env: { OPENAI_API_KEY: "secret" }, createGate: gate(), statusGate: gate() });
+  assert.equal(beforeRead.status, 499);
+  assert.equal((await beforeRead.json()).error.code, "CANCELLED");
+
+  let readStarted;
+  let cancelled = false;
+  const requestController = new AbortController();
+  const pendingBody = new ReadableStream({
+    pull() {
+      readStarted();
+      return new Promise(() => {});
+    },
+    cancel() { cancelled = true; },
+  });
+  const readStartedPromise = new Promise((resolve) => { readStarted = resolve; });
+  const result = handleSalesEnablementApiRequest(createRequest(undefined, {
+    body: pendingBody, duplex: "half", signal: requestController.signal,
+  }), { env: { OPENAI_API_KEY: "secret" }, createGate: gate(), statusGate: gate() });
+  await readStartedPromise;
+  requestController.abort(new DOMException("abort-secret-sentinel", "AbortError"));
+  const duringRead = await result;
+  assert.equal(duringRead.status, 499);
+  assert.equal((await duringRead.json()).error.code, "CANCELLED");
+  assert.equal(cancelled, true);
+});
+
+test("body ingestion reports a pending-read deadline as timeout", async (t) => {
+  const deadline = new AbortController();
+  t.mock.method(AbortSignal, "timeout", () => deadline.signal);
+  let startRead;
+  let cancelled = false;
+  const readStarted = new Promise((resolve) => { startRead = resolve; });
+  const pendingBody = new ReadableStream({
+    pull() {
+      startRead();
+      return new Promise(() => {});
+    },
+    cancel() { cancelled = true; },
+  });
+  const result = handleSalesEnablementApiRequest(createRequest(undefined, {
+    body: pendingBody, duplex: "half",
+  }), {
+    env: { OPENAI_API_KEY: "secret" }, createGate: gate(), statusGate: gate(), timeoutMs: 5,
+  });
+  await readStarted;
+  deadline.abort(new DOMException("deadline-secret-sentinel", "TimeoutError"));
+  const response = await result;
+  assert.equal(response.status, 504);
+  assert.equal((await response.json()).error.code, "TIMEOUT");
+  assert.equal(cancelled, true);
+});
+
+test("stream faults never expose their error details", async () => {
+  const response = await handleSalesEnablementApiRequest(createRequest(undefined, {
+    body: new ReadableStream({
+      start(controller) { controller.error(new Error("stream-secret-sentinel")); },
+    }),
+    duplex: "half",
+  }), { env: { OPENAI_API_KEY: "secret" }, createGate: gate(), statusGate: gate() });
+  assert.equal(response.status, 502);
+  const text = await response.text();
+  assert.match(text, /RUN_FAILED/);
+  assert.doesNotMatch(text, /stream-secret-sentinel/);
+});
