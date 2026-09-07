@@ -26,12 +26,14 @@ export function createSalesEnablementLifecycle({ dispatch, storage, fetchImpl, s
   let controller = null;
   let pendingRequestId = null;
   let resumedId = null;
+  let deferredResume = null;
   let autoResumeSuppressed = false;
   const coolingDown = () => (getSession().cooldown?.until ?? 0) > Date.now();
   const abort = () => {
     controller?.abort();
     controller = null;
     resumedId = null;
+    deferredResume = null;
     if (pendingRequestId) dispatch({ type: "request-cancelled", requestId: pendingRequestId });
     pendingRequestId = null;
   };
@@ -76,13 +78,27 @@ export function createSalesEnablementLifecycle({ dispatch, storage, fetchImpl, s
       dispatch({ type: "show-example" });
     },
     runLive: (input) => coolingDown() ? Promise.resolve() : execute(input),
+    releaseCooldown(cooldown) {
+      const current = getSession().cooldown;
+      if (!current || current.until !== cooldown.until || current.requestId !== cooldown.requestId || coolingDown()) return;
+      dispatch({ type: "retry-ready", requestId: cooldown.requestId });
+      const deferred = deferredResume;
+      deferredResume = null;
+      if (!deferred || autoResumeSuppressed || pendingRequestId || getSession().requestStatus !== "idle") return;
+      return execute(deferred.input, deferred.id);
+    },
     resume(input) {
-      if (autoResumeSuppressed || coolingDown()) return Promise.resolve();
+      if (autoResumeSuppressed || pendingRequestId) return Promise.resolve();
       const retained = getSession().activeRun;
       const retainedId = retained && active(retained) && SALES_ENABLEMENT_RESPONSE_ID.test(retained.id) &&
         retained.workflowId === "sales-enablement" && retained.companyId === "retell" ? retained.id : null;
       const id = retainedId ?? latestActiveRunId(storage);
-      if (!id || id === resumedId) return Promise.resolve();
+      if (!id) return Promise.resolve();
+      if (coolingDown()) {
+        deferredResume = { id, input };
+        return Promise.resolve();
+      }
+      if (id === resumedId) return Promise.resolve();
       return execute(input, id);
     },
   };
@@ -114,11 +130,10 @@ export function useSalesEnablementRuntime({ session, dispatch, storage = browser
 
   useEffect(() => {
     if (!session.cooldown) return undefined;
-    const { until, requestId: cooldownRequestId } = session.cooldown;
-    const timer = setTimeout(() => dispatch({ type: "retry-ready", requestId: cooldownRequestId }),
-      Math.max(0, until - Date.now()));
+    const timer = setTimeout(() => lifecycle.releaseCooldown(session.cooldown),
+      Math.max(0, session.cooldown.until - Date.now()));
     return () => clearTimeout(timer);
-  }, [dispatch, session.cooldown]);
+  }, [lifecycle, session.cooldown]);
 
   useEffect(() => {
     if (!session.provider.checked || !session.provider.configured) return undefined;

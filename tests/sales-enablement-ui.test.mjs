@@ -577,3 +577,98 @@ test("explicit Example suppresses delayed automatic resume for this visit but a 
   assert.equal(harness.session.mode, "live");
   assert.equal(harness.session.run.status, "completed");
 });
+
+test("a reopened active run resumes its retained ID when cooldown expires without navigation", async (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  const queued = await publicRun("queued");
+  const completed = await publicRun();
+  const calls = [];
+  const harness = await lifecycleHarness(async (url, options) => {
+    calls.push([url, options.method ?? "GET"]);
+    return calls.length === 1 ? response({ error: {
+      code: "RATE_LIMITED", message: "Wait before retrieving.", retryable: true, retryAfterSeconds: 10,
+    } }, 429) : response(completed);
+  });
+  harness.rememberRun(harness.storage, queued, harness.session.input);
+  await harness.lifecycle.resume(harness.session.input);
+  const cooldown = harness.session.cooldown;
+  harness.lifecycle.abort();
+  const reopened = harness.remount();
+  await reopened.resume(harness.session.input);
+  assert.equal(calls.length, 1);
+  assert.equal(harness.latestActiveRunId(harness.storage), "resp_lifecycle123");
+  now = 10999;
+  await reopened.releaseCooldown(cooldown);
+  assert.equal(calls.length, 1);
+  now = 11000;
+  await reopened.releaseCooldown(cooldown);
+  assert.deepEqual(calls, [
+    ["/api/sales-enablement/runs/resp_lifecycle123", "GET"],
+    ["/api/sales-enablement/runs/resp_lifecycle123", "GET"],
+  ]);
+  assert.equal(harness.session.run.status, "completed");
+  assert.equal(harness.session.retryBlocked, false);
+  assert.equal(harness.session.requestStatus, "idle");
+  assert.equal(harness.actions.find(({ type }) => type === "retry-ready").requestId, cooldown.requestId);
+  await reopened.releaseCooldown(cooldown);
+  assert.equal(calls.length, 2);
+});
+
+test("Example selection cancels a deferred resume but preserves its active ID", async (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  const queued = await publicRun("queued");
+  let calls = 0;
+  const harness = await lifecycleHarness(async () => {
+    calls += 1;
+    return response({ error: { code: "RATE_LIMITED", message: "Wait.", retryable: true, retryAfterSeconds: 10 } }, 429);
+  });
+  harness.rememberRun(harness.storage, queued, harness.session.input);
+  await harness.lifecycle.resume(harness.session.input);
+  const cooldown = harness.session.cooldown;
+  const reopened = harness.remount();
+  await reopened.resume(harness.session.input);
+  reopened.showExample();
+  now = 11000;
+  await reopened.releaseCooldown(cooldown);
+  assert.equal(calls, 1);
+  assert.equal(harness.session.mode, "example");
+  assert.equal(harness.session.retryBlocked, false);
+  assert.equal(harness.latestActiveRunId(harness.storage), "resp_lifecycle123");
+});
+
+test("cooldown expiry neither replays a create nor interrupts unrelated active work", async (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  const queued = await publicRun("queued");
+  const completed = await publicRun("completed", "resp_newrequest1");
+  let resolveCreate;
+  let createSignal;
+  const calls = [];
+  const harness = await lifecycleHarness(async (url, options) => {
+    calls.push([url, options.method ?? "GET"]);
+    if (calls.length === 1) return response({ error: {
+      code: "RATE_LIMITED", message: "Wait.", retryable: true, retryAfterSeconds: 10,
+    } }, 429);
+    createSignal = options.signal;
+    return new Promise((resolve) => { resolveCreate = resolve; });
+  });
+  harness.rememberRun(harness.storage, queued, harness.session.input);
+  await harness.lifecycle.resume(harness.session.input);
+  const cooldown = harness.session.cooldown;
+  const reopened = harness.remount();
+  await reopened.resume(harness.session.input);
+  now = 11000;
+  const creating = reopened.runLive(harness.session.input);
+  const creatingId = harness.session.requestId;
+  await reopened.releaseCooldown(cooldown);
+  assert.equal(calls.length, 2);
+  assert.equal(createSignal.aborted, false);
+  assert.equal(harness.session.requestId, creatingId);
+  assert.equal(harness.session.requestStatus, "creating");
+  resolveCreate(response(completed));
+  await creating;
+  assert.deepEqual(calls.map((call) => call[1]), ["GET", "POST"]);
+  assert.equal(harness.session.run.id, "resp_newrequest1");
+});
