@@ -20,6 +20,9 @@ export function SalesEnablementWorkspace({ session, dispatch, onExit, onRunLive 
   // The previous artifact remains in session while a create request is pending.
   const run = session.requestStatus === "creating" || (session.mode === "live" && session.run.id.startsWith("example_")) ? null : session.run;
   const hasInspector = Boolean(run?.artifact && ["research", "review"].includes(stage.id));
+  const retrySeconds = session.cooldown ? Math.max(0, Math.ceil((session.cooldown.until - Date.now()) / 1000)) :
+    session.retryBlocked ? session.error?.retryAfterSeconds : 0;
+  const retryBlocked = session.retryBlocked || retrySeconds > 0;
 
   return (
     <section className="sales-enablement-shell" data-sales-enablement-workspace>
@@ -33,7 +36,7 @@ export function SalesEnablementWorkspace({ session, dispatch, onExit, onRunLive 
           <Button variant={session.mode === "example" ? "primary" : "secondary"}
             type="button" onClick={() => dispatch({ type: "show-example" })}>Example run</Button>
           <Button type="button" disabled={!session.provider.configured ||
-              session.requestStatus !== "idle" || session.retryBlocked}
+              session.requestStatus !== "idle" || retryBlocked}
             onClick={onRunLive}>Run live</Button>
           {session.provider.checked && !session.provider.configured ? (
             <small>Live execution is not configured. Example run stays available.</small>
@@ -46,7 +49,7 @@ export function SalesEnablementWorkspace({ session, dispatch, onExit, onRunLive 
         onSelect={(stepId) => dispatch({ type: "select-step", stepId })}
       />
       <SalesEnablementRunStatus run={run} mode={session.mode} error={session.error}
-        requestStatus={session.requestStatus} retryBlocked={session.retryBlocked} />
+        requestStatus={session.requestStatus} retryBlocked={retryBlocked} retrySeconds={retrySeconds} />
       <div className={`sales-enablement-body${hasInspector ? "" : " is-wide"}`}>
         <div className="sales-enablement-main">
           {stage.view === "scope" ? <StageView input={session.input} dispatch={dispatch} /> :

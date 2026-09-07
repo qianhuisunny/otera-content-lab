@@ -290,7 +290,7 @@ test("request failures and provider wait remain visible on every step", async ()
   assert.match(markup, /12 seconds/);
 });
 
-async function lifecycleHarness(fetchImpl, sleep) {
+async function lifecycleHarness(fetchImpl, sleep, options = {}) {
   const { createSalesEnablementLifecycle } = await vite.ssrLoadModule(
     "/src/components/sales-enablement/useSalesEnablementRuntime.js");
   const { createSalesEnablementSession, salesEnablementReducer, rememberRun, latestActiveRunId } =
@@ -298,11 +298,11 @@ async function lifecycleHarness(fetchImpl, sleep) {
   let session = createSalesEnablementSession();
   const actions = [];
   const values = new Map();
-  const storage = { getItem: (key) => values.get(key), setItem: (key, value) => values.set(key, value) };
-  const lifecycle = createSalesEnablementLifecycle({ fetchImpl, sleep, storage,
-    dispatch(action) { actions.push(action); session = salesEnablementReducer(session, action); },
-  });
-  return { lifecycle, actions, storage, rememberRun, latestActiveRunId, get session() { return session; } };
+  const storage = options.storage ?? { getItem: (key) => values.get(key), setItem: (key, value) => values.set(key, value) };
+  const dispatch = (action) => { actions.push(action); session = salesEnablementReducer(session, action); };
+  const remount = () => createSalesEnablementLifecycle({ fetchImpl, sleep, storage, dispatch, getSession: () => session });
+  const lifecycle = remount();
+  return { lifecycle, remount, dispatch, actions, storage, rememberRun, latestActiveRunId, get session() { return session; } };
 }
 const response = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status, headers: { "content-type": "application/json", ...headers },
@@ -359,7 +359,9 @@ test("resume ignores corrupt IDs, follows an active run once, and honors polling
   assert.equal(new Set(harness.actions.map(({ requestId }) => requestId)).size, 1);
 });
 
-test("create failures require an explicit retry and each attempt has a new request ID", async () => {
+test("create failures require an explicit retry after cooldown and each attempt has a new request ID", async (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
   let calls = 0;
   const harness = await lifecycleHarness(async () => {
     calls += 1;
@@ -371,9 +373,11 @@ test("create failures require an explicit retry and each attempt has a new reque
   assert.equal(harness.session.error.retryAfterSeconds, 5);
   const firstId = harness.actions[0].requestId;
   assert.equal(harness.actions[1].requestId, firstId);
+  now += 5000;
+  harness.dispatch({ type: "retry-ready", requestId: firstId });
   await harness.lifecycle.runLive(harness.session.input);
   assert.equal(calls, 2);
-  assert.notEqual(harness.actions[2].requestId, firstId);
+  assert.notEqual(harness.actions.findLast(({ type }) => type === "live-starting").requestId, firstId);
 });
 
 test("new requests abort old creates and late completions cannot change state or storage", async () => {
@@ -397,7 +401,7 @@ test("new requests abort old creates and late completions cannot change state or
   await old;
   assert.equal(harness.session.run.id, "resp_newrequest1");
   assert.doesNotMatch(harness.storage.getItem("content-lab:sales-enablement-runs:v1"), /resp_oldrequest1/);
-  assert.deepEqual(harness.actions.map(({ type }) => type), ["live-starting", "live-starting", "live-started"]);
+  assert.deepEqual(harness.actions.map(({ type }) => type), ["live-starting", "request-cancelled", "live-starting", "live-started"]);
 });
 
 test("poll network failures retain a sanitized resumable ID and hide raw exception details", async () => {
@@ -447,4 +451,129 @@ test("a mismatched polled run cannot overwrite the active run or remembered inde
   assert.match(harness.session.error.message, /could not be reached/);
   assert.equal(harness.latestActiveRunId(harness.storage), "resp_lifecycle123");
   assert.doesNotMatch(harness.storage.getItem("content-lab:sales-enablement-runs:v1"), /resp_unrelated1/);
+});
+
+test("exit during create leaves an honest interrupted state and an enabled explicit action on reopen", async () => {
+  const completed = await publicRun();
+  let resolveCreate;
+  let calls = 0;
+  const harness = await lifecycleHarness(async () => {
+    calls += 1;
+    if (calls === 1) return new Promise((resolve) => { resolveCreate = resolve; });
+    return response(completed);
+  });
+  const pending = harness.lifecycle.runLive(harness.session.input);
+  const id = harness.session.requestId;
+  harness.lifecycle.abort();
+  assert.equal(harness.session.requestStatus, "idle");
+  assert.equal(harness.actions.at(-1).requestId, id);
+  const reopened = harness.remount();
+  await reopened.resume(harness.session.input);
+  assert.equal(calls, 1);
+  const { SalesEnablementWorkspace } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...harness.session, provider: { checked: true, configured: true } }, dispatch() {}, onExit() {},
+  });
+  assert.match(markup, /interrupted/);
+  assert.match(markup, /<button(?![^>]*disabled)[^>]*>Run live<\/button>/);
+  resolveCreate(response(completed));
+  await pending;
+  assert.equal(harness.session.requestStatus, "idle");
+  await reopened.runLive(harness.session.input);
+  assert.equal(calls, 2);
+  assert.equal(harness.session.run.status, "completed");
+});
+
+test("interrupted polling resumes from retained memory when browser storage is unavailable", async () => {
+  const queued = await publicRun("queued");
+  const completed = await publicRun();
+  let resolvePoll;
+  const calls = [];
+  const harness = await lifecycleHarness(async (url, options) => {
+    calls.push([url, options.method ?? "GET"]);
+    if (calls.length === 1) return response(queued);
+    if (calls.length === 2) return new Promise((resolve) => { resolvePoll = resolve; });
+    return response(completed);
+  }, undefined, { storage: { getItem() { throw new Error("denied"); }, setItem() { throw new Error("denied"); } } });
+  const pending = harness.lifecycle.runLive(harness.session.input);
+  while (!resolvePoll) await new Promise((resolve) => setImmediate(resolve));
+  harness.lifecycle.abort();
+  assert.equal(harness.session.requestStatus, "idle");
+  await harness.remount().resume(harness.session.input);
+  assert.equal(harness.session.run.status, "completed");
+  assert.deepEqual(calls.map((call) => call[1]), ["POST", "GET", "GET"]);
+  assert.equal(calls[2][0], "/api/sales-enablement/runs/resp_lifecycle123");
+  resolvePoll(response(queued));
+  await pending;
+  assert.equal(harness.session.run.status, "completed");
+});
+
+test("Example keeps provider cooldown visible and blocks creates across remount until its deadline", async (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  let calls = 0;
+  const harness = await lifecycleHarness(async () => {
+    calls += 1;
+    return response({ error: { code: "RATE_LIMITED", message: "Wait.", retryable: true, retryAfterSeconds: 30 } }, 429);
+  });
+  await harness.lifecycle.runLive(harness.session.input);
+  harness.lifecycle.showExample();
+  const reopened = harness.remount();
+  now = 11000;
+  await reopened.runLive(harness.session.input);
+  assert.equal(calls, 1);
+  const { SalesEnablementWorkspace } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...harness.session, provider: { checked: true, configured: true } }, dispatch() {}, onExit() {},
+  });
+  assert.equal(harness.session.mode, "example");
+  assert.match(markup, /<strong>Example run<\/strong>/);
+  assert.match(markup, /20 seconds/);
+  assert.match(markup, /<button[^>]*disabled[^>]*>Run live<\/button>/);
+  now = 31000;
+  harness.dispatch({ type: "retry-ready", requestId: harness.session.cooldown.requestId });
+  assert.equal(harness.session.retryBlocked, false);
+  const readyMarkup = render(SalesEnablementWorkspace, {
+    session: { ...harness.session, provider: { checked: true, configured: true } }, dispatch() {}, onExit() {},
+  });
+  assert.match(readyMarkup, /<button(?![^>]*disabled)[^>]*>Run live<\/button>/);
+  await reopened.runLive(harness.session.input);
+  assert.equal(calls, 2);
+});
+
+test("cooldown expiry re-enables the live failure view even while its error message remains", async (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  const harness = await lifecycleHarness(async () => response({ error: {
+    code: "RATE_LIMITED", message: "Wait before retrying.", retryable: true, retryAfterSeconds: 5,
+  } }, 429));
+  await harness.lifecycle.runLive(harness.session.input);
+  now += 5000;
+  harness.dispatch({ type: "retry-ready", requestId: harness.session.cooldown.requestId });
+  const { SalesEnablementWorkspace } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...harness.session, provider: { checked: true, configured: true } }, dispatch() {}, onExit() {},
+  });
+  assert.match(markup, /<button(?![^>]*disabled)[^>]*>Run live<\/button>/);
+  assert.doesNotMatch(markup, /5 seconds/);
+});
+
+test("explicit Example suppresses delayed automatic resume for this visit but a remount can resume", async () => {
+  const queued = await publicRun("queued");
+  const completed = await publicRun();
+  let calls = 0;
+  const harness = await lifecycleHarness(async () => { calls += 1; return response(completed); });
+  harness.rememberRun(harness.storage, queued, harness.session.input);
+  harness.lifecycle.showExample();
+  harness.dispatch({ type: "provider-health", provider: { configured: true, model: "gpt-5.6-sol" } });
+  await harness.lifecycle.resume(harness.session.input);
+  // Effect cleanup must not erase an explicit choice made during this visit.
+  harness.lifecycle.abort();
+  await harness.lifecycle.resume(harness.session.input);
+  assert.equal(calls, 0);
+  assert.equal(harness.session.mode, "example");
+  await harness.remount().resume(harness.session.input);
+  assert.equal(calls, 1);
+  assert.equal(harness.session.mode, "live");
+  assert.equal(harness.session.run.status, "completed");
 });

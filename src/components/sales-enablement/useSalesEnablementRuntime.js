@@ -4,6 +4,7 @@ import {
   pollSalesEnablementRun, retrieveSalesEnablementRun,
 } from "../../data/salesEnablementClient.js";
 import { latestActiveRunId, rememberRun } from "../../data/salesEnablementSession.js";
+import { SALES_ENABLEMENT_RESPONSE_ID } from "../../data/salesEnablementContract.js";
 
 let requestSequence = 0;
 const active = (run) => ["queued", "in_progress"].includes(run.status);
@@ -21,13 +22,18 @@ function publicRequestError(error) {
 
 // One owner for a create/resume and its polling. Every dispatch and storage write
 // belongs to that request, even if a transport completes after it was aborted.
-export function createSalesEnablementLifecycle({ dispatch, storage, fetchImpl, sleep }) {
+export function createSalesEnablementLifecycle({ dispatch, storage, fetchImpl, sleep, getSession }) {
   let controller = null;
+  let pendingRequestId = null;
   let resumedId = null;
+  let autoResumeSuppressed = false;
+  const coolingDown = () => (getSession().cooldown?.until ?? 0) > Date.now();
   const abort = () => {
     controller?.abort();
     controller = null;
     resumedId = null;
+    if (pendingRequestId) dispatch({ type: "request-cancelled", requestId: pendingRequestId });
+    pendingRequestId = null;
   };
   const execute = async (input, resumeId = null) => {
     abort();
@@ -35,6 +41,7 @@ export function createSalesEnablementLifecycle({ dispatch, storage, fetchImpl, s
     const current = new AbortController();
     controller = current;
     const id = requestId();
+    pendingRequestId = id;
     const options = { fetchImpl, signal: current.signal };
     const isCurrent = () => controller === current && !current.signal.aborted;
     const publish = (type, run) => {
@@ -57,13 +64,24 @@ export function createSalesEnablementLifecycle({ dispatch, storage, fetchImpl, s
       });
     } catch (error) {
       if (isCurrent()) dispatch({ type: "request-failed", requestId: id, error: publicRequestError(error) });
+    } finally {
+      if (controller === current) pendingRequestId = null;
     }
   };
   return {
     abort,
-    runLive: (input) => execute(input),
+    showExample() {
+      autoResumeSuppressed = true;
+      abort();
+      dispatch({ type: "show-example" });
+    },
+    runLive: (input) => coolingDown() ? Promise.resolve() : execute(input),
     resume(input) {
-      const id = latestActiveRunId(storage);
+      if (autoResumeSuppressed || coolingDown()) return Promise.resolve();
+      const retained = getSession().activeRun;
+      const retainedId = retained && active(retained) && SALES_ENABLEMENT_RESPONSE_ID.test(retained.id) &&
+        retained.workflowId === "sales-enablement" && retained.companyId === "retell" ? retained.id : null;
+      const id = retainedId ?? latestActiveRunId(storage);
       if (!id || id === resumedId) return Promise.resolve();
       return execute(input, id);
     },
@@ -76,9 +94,10 @@ function browserStorage() {
 }
 
 export function useSalesEnablementRuntime({ session, dispatch, storage = browserStorage() }) {
-  const inputRef = useRef(session.input);
-  inputRef.current = session.input;
-  const lifecycle = useMemo(() => createSalesEnablementLifecycle({ dispatch, storage }), [dispatch, storage]);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  const lifecycle = useMemo(() => createSalesEnablementLifecycle({ dispatch, storage,
+    getSession: () => sessionRef.current }), [dispatch, storage]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,15 +113,16 @@ export function useSalesEnablementRuntime({ session, dispatch, storage = browser
   }, [dispatch]);
 
   useEffect(() => {
-    const seconds = Number(session.error?.retryAfterSeconds);
-    if (!session.retryBlocked || !Number.isFinite(seconds) || seconds <= 0) return undefined;
-    const timer = setTimeout(() => dispatch({ type: "retry-ready" }), seconds * 1000);
+    if (!session.cooldown) return undefined;
+    const { until, requestId: cooldownRequestId } = session.cooldown;
+    const timer = setTimeout(() => dispatch({ type: "retry-ready", requestId: cooldownRequestId }),
+      Math.max(0, until - Date.now()));
     return () => clearTimeout(timer);
-  }, [dispatch, session.error, session.retryBlocked]);
+  }, [dispatch, session.cooldown]);
 
   useEffect(() => {
     if (!session.provider.checked || !session.provider.configured) return undefined;
-    lifecycle.resume(inputRef.current);
+    lifecycle.resume(sessionRef.current.input);
     // Reset the resume guard when React remounts effects, allowing an aborted GET
     // to resume safely without ever replaying a create request.
     return lifecycle.abort;
@@ -110,8 +130,9 @@ export function useSalesEnablementRuntime({ session, dispatch, storage = browser
 
   useEffect(() => lifecycle.abort, [lifecycle]);
   const runLive = useCallback(() => {
-    if (!session.provider.configured || session.requestStatus !== "idle" || session.retryBlocked) return;
-    return lifecycle.runLive(inputRef.current);
-  }, [lifecycle, session.provider.configured, session.requestStatus, session.retryBlocked]);
-  return { runLive, abort: lifecycle.abort };
+    const current = sessionRef.current;
+    if (!current.provider.configured || current.requestStatus !== "idle" || current.retryBlocked) return;
+    return lifecycle.runLive(current.input);
+  }, [lifecycle]);
+  return { runLive, abort: lifecycle.abort, showExample: lifecycle.showExample };
 }

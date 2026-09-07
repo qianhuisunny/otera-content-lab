@@ -43,8 +43,8 @@ export function readRunIndex(storage) {
   };
 }
 
-export function rememberRun(storage, run, input) {
-  const record = parseRecord({
+function runRecord(run) {
+  return parseRecord({
     id: run?.id,
     workflowId: run?.workflowId,
     companyId: run?.companyId,
@@ -52,6 +52,10 @@ export function rememberRun(storage, run, input) {
     inputSummary: "Sales enablement deck",
     status: run?.status,
   });
+}
+
+export function rememberRun(storage, run, input) {
+  const record = runRecord(run);
   if (!record) return readRunIndex(storage);
   const existing = readRunIndex(storage).runs.filter(({ id }) => id !== record.id);
   const index = { version: INDEX_VERSION, runs: [record, ...existing].slice(0, RUN_LIMIT) };
@@ -74,9 +78,18 @@ export function createSalesEnablementSession() {
     provider: { checked: false, configured: false, model: "gpt-5.6-sol" },
     requestStatus: "idle",
     requestId: null,
+    activeRun: null,
+    cooldown: null,
     retryBlocked: false,
     error: null,
   };
+}
+
+function providerCooldown(state, error, requestId) {
+  const seconds = Number(error?.retryAfterSeconds);
+  const until = Number.isFinite(seconds) && seconds > 0 ? Date.now() + seconds * 1000 : 0;
+  const cooldown = until > (state.cooldown?.until ?? 0) ? { until, requestId } : state.cooldown;
+  return { cooldown, retryBlocked: (cooldown?.until ?? 0) > Date.now() };
 }
 
 export function salesEnablementReducer(state, action) {
@@ -92,9 +105,11 @@ export function salesEnablementReducer(state, action) {
   }
   if (action.type === "show-example") {
     return { ...state, mode: "example", run: RETELL_SALES_ENABLEMENT_EXAMPLE_RUN,
-      requestStatus: "idle", requestId: null, retryBlocked: false, error: null };
+      requestStatus: "idle", requestId: null,
+      retryBlocked: (state.cooldown?.until ?? 0) > Date.now(), error: null };
   }
   if (action.type === "live-starting") {
+    if ((state.cooldown?.until ?? 0) > Date.now()) return state;
     return { ...state, mode: "live", requestStatus: "creating",
       requestId: action.requestId ?? null, retryBlocked: false, error: null };
   }
@@ -102,9 +117,10 @@ export function salesEnablementReducer(state, action) {
     if ((action.requestId !== undefined && action.requestId !== state.requestId) ||
         (action.requestId === undefined && state.requestId !== null)) return state;
     return { ...state, mode: "live", run: action.run,
+      activeRun: ["queued", "in_progress"].includes(action.run.status) ? runRecord(action.run) : null,
       activeStepId: action.run.stageId,
       requestStatus: ["queued", "in_progress"].includes(action.run.status) ? "polling" : "idle",
-      retryBlocked: Number(action.run.error?.retryAfterSeconds) > 0,
+      ...providerCooldown(state, action.run.error, action.requestId),
       error: action.run.error };
   }
   if (action.type === "live-updated") {
@@ -112,16 +128,29 @@ export function salesEnablementReducer(state, action) {
         (action.requestId !== undefined && action.requestId !== state.requestId) ||
         (action.requestId === undefined && state.requestId !== null)) return state;
     return { ...state, run: action.run,
+      activeRun: ["queued", "in_progress"].includes(action.run.status) ? runRecord(action.run) : null,
       activeStepId: action.run.stageId,
       requestStatus: ["queued", "in_progress"].includes(action.run.status) ? "polling" : "idle",
-      retryBlocked: Number(action.run.error?.retryAfterSeconds) > 0,
+      ...providerCooldown(state, action.run.error, action.requestId),
       error: action.run.error };
   }
   if (action.type === "request-failed") {
     if (action.requestId !== undefined && action.requestId !== state.requestId) return state;
     return { ...state, requestStatus: "idle", error: action.error,
-      retryBlocked: Number(action.error?.retryAfterSeconds) > 0 };
+      ...providerCooldown(state, action.error, action.requestId) };
   }
-  if (action.type === "retry-ready") return { ...state, retryBlocked: false };
+  if (action.type === "request-cancelled") {
+    if (!action.requestId || action.requestId !== state.requestId || state.requestStatus === "idle") return state;
+    return { ...state, requestStatus: "idle", requestId: null, error: {
+      code: "REQUEST_INTERRUPTED", retryable: true, retryAfterSeconds: null,
+      message: state.activeRun ? "Live updates were interrupted. This run can resume when you reopen the workspace." :
+        "The live request was interrupted before a run ID was received. Run live to start a new request.",
+    } };
+  }
+  if (action.type === "retry-ready") {
+    if ((state.cooldown?.until ?? 0) > Date.now() ||
+        (action.requestId !== undefined && action.requestId !== state.cooldown?.requestId)) return state;
+    return { ...state, retryBlocked: false, cooldown: null };
+  }
   return state;
 }

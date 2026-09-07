@@ -29,7 +29,9 @@ test("the browser workflow is loaded from the canonical JSON manifest", () => {
     .every(({ sources }) => sources.length > 0));
 });
 
-test("the isolated reducer edits scope, selects steps, and swaps example/live state", () => {
+test("the isolated reducer edits scope, selects steps, and swaps example/live state", (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
   const initial = createSalesEnablementSession();
   const edited = salesEnablementReducer(initial, {
     type: "set-input", field: "buyerProblem", value: "Edited deal problem",
@@ -52,9 +54,49 @@ test("the isolated reducer edits scope, selects steps, and swaps example/live st
       retryable: true, retryAfterSeconds: 30 },
   });
   assert.equal(limited.retryBlocked, true);
+  now += 30000;
   assert.equal(salesEnablementReducer(limited, {
     type: "retry-ready",
   }).retryBlocked, false);
+});
+
+test("cancellation settles only its current request and retains active metadata through Example", () => {
+  const initial = createSalesEnablementSession();
+  const creating = salesEnablementReducer(initial, { type: "live-starting", requestId: "request-1" });
+  const interrupted = salesEnablementReducer(creating, { type: "request-cancelled", requestId: "request-1" });
+  assert.equal(interrupted.requestStatus, "idle");
+  assert.equal(interrupted.requestId, null);
+  assert.match(interrupted.error.message, /interrupted/);
+  const next = salesEnablementReducer(interrupted, { type: "live-starting", requestId: "request-2" });
+  assert.equal(salesEnablementReducer(next, { type: "request-cancelled", requestId: "request-1" }), next);
+  const polling = salesEnablementReducer(next, { type: "live-started", requestId: "request-2",
+    run: { ...RETELL_SALES_ENABLEMENT_EXAMPLE_RUN, id: "resp_inmemory123", status: "queued", artifact: null } });
+  const cancelled = salesEnablementReducer(polling, { type: "request-cancelled", requestId: "request-2" });
+  const example = salesEnablementReducer(cancelled, { type: "show-example" });
+  assert.equal(example.mode, "example");
+  assert.equal(example.activeRun.id, "resp_inmemory123");
+  assert.deepEqual(Object.keys(example.activeRun).sort(), ["companyId", "createdAt", "id", "inputSummary", "status", "workflowId"]);
+  assert.equal(salesEnablementReducer(example, { type: "live-started", requestId: "request-2", run: polling.run }), example);
+});
+
+test("Example and stale timers cannot erase a provider cooldown deadline", (t) => {
+  let now = 1000;
+  t.mock.method(Date, "now", () => now);
+  const creating = salesEnablementReducer(createSalesEnablementSession(), { type: "live-starting", requestId: "request-limit" });
+  const limited = salesEnablementReducer(creating, { type: "request-failed", requestId: "request-limit",
+    error: { code: "PROVIDER_LIMIT", message: "Wait.", retryable: true, retryAfterSeconds: 30 } });
+  const example = salesEnablementReducer(limited, { type: "show-example" });
+  assert.equal(example.mode, "example");
+  assert.equal(example.error, null);
+  assert.equal(example.retryBlocked, true);
+  assert.deepEqual(example.cooldown, { until: 31000, requestId: "request-limit" });
+  assert.equal(salesEnablementReducer(example, { type: "live-starting", requestId: "bypass" }), example);
+  assert.equal(salesEnablementReducer(example, { type: "retry-ready", requestId: "request-limit" }), example);
+  now = 31000;
+  assert.equal(salesEnablementReducer(example, { type: "retry-ready", requestId: "stale-request" }), example);
+  const ready = salesEnablementReducer(example, { type: "retry-ready", requestId: "request-limit" });
+  assert.equal(ready.retryBlocked, false);
+  assert.equal(ready.cooldown, null);
 });
 
 test("late live updates cannot replace example mode or a newer run", () => {

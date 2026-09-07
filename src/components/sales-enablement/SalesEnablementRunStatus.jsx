@@ -5,7 +5,7 @@ const statusCopy = {
   failed: "Needs attention",
 };
 
-export function SalesEnablementRunStatus({ run, mode, error, requestStatus, retryBlocked }) {
+export function SalesEnablementRunStatus({ run, mode, error, requestStatus, retryBlocked, retrySeconds }) {
   const failure = error ?? run?.error;
   const status = failure ? "failed" : run?.status ?? "queued";
   return (
@@ -16,7 +16,7 @@ export function SalesEnablementRunStatus({ run, mode, error, requestStatus, retr
         <span>{requestStatus === "creating" ? "Starting live run" : statusCopy[status]}</span>
       </div>
       {failure ? <p role="alert">{failure.message}</p> : null}
-      {retryBlocked && failure?.retryAfterSeconds > 0 ? <p>Try again after {failure.retryAfterSeconds} seconds. Run live will become available when the wait ends.</p> : null}
+      {retryBlocked && retrySeconds > 0 ? <p>Try again after {retrySeconds} seconds. Run live will become available when the wait ends.</p> : null}
     </section>
   );
 }
