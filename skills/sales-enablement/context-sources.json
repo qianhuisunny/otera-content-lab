@@ -1,0 +1,28 @@
+{
+  "sources": [
+    { "id": "retell-company-context", "path": "content/retell/company-context.md", "sourceType": "canonical_context", "lanes": ["company_positioning", "product_technical", "proof_claims"] },
+    { "id": "retell-founder-context", "path": "content/retell/founder-context.md", "sourceType": "canonical_context", "lanes": ["company_positioning"] },
+    { "id": "retell-market-context", "path": "content/retell/market-context.md", "sourceType": "canonical_context", "lanes": ["market_alternatives", "company_positioning"] },
+    { "id": "retell-icp-context", "path": "content/retell/icp-context.md", "sourceType": "canonical_context", "lanes": ["executive_buyer", "technical_buyer", "company_positioning"] },
+    { "id": "retell-persona-index", "path": "content/retell/persona-index.md", "sourceType": "canonical_context", "lanes": ["executive_buyer", "technical_buyer", "skeptical_review"] },
+    { "id": "retell-executive-sponsor", "path": "content/retell/01-executive-sponsor.md", "sourceType": "persona", "lanes": ["executive_buyer", "skeptical_review"] },
+    { "id": "retell-workflow-owner", "path": "content/retell/02-workflow-owner.md", "sourceType": "persona", "lanes": ["executive_buyer", "product_technical"] },
+    { "id": "retell-technical-owner", "path": "content/retell/03-technical-owner.md", "sourceType": "persona", "lanes": ["technical_buyer", "product_technical", "skeptical_review"] },
+    { "id": "retell-agent-builder", "path": "content/retell/04-agent-builder.md", "sourceType": "persona", "lanes": ["technical_buyer", "product_technical"] },
+    { "id": "retell-conversation-quality-owner", "path": "content/retell/05-conversation-quality-owner.md", "sourceType": "persona", "lanes": ["technical_buyer", "product_technical", "proof_claims"] },
+    { "id": "retell-governance-approver", "path": "content/retell/06-governance-approver.md", "sourceType": "persona", "lanes": ["technical_buyer", "product_technical", "skeptical_review"] },
+    { "id": "retell-solution-partner-platform-operator", "path": "content/retell/07-solution-partner-platform-operator.md", "sourceType": "persona", "lanes": ["technical_buyer", "product_technical"] },
+    { "id": "retell-company-research", "path": "research/retell/company-research-output.md", "sourceType": "raw_research", "lanes": ["company_positioning", "product_technical", "proof_claims"] },
+    { "id": "retell-founder-research", "path": "research/retell/founder-research-output.md", "sourceType": "raw_research", "lanes": ["company_positioning", "proof_claims"] },
+    { "id": "retell-market-research", "path": "research/retell/market-research-output.md", "sourceType": "raw_research", "lanes": ["market_alternatives", "proof_claims"] },
+    { "id": "retell-persona-research", "path": "research/retell/persona-research-output.md", "sourceType": "raw_research", "lanes": ["executive_buyer", "technical_buyer", "proof_claims"] },
+    { "id": "retell-report-source", "path": "research/retell/report-source.md", "sourceType": "consolidated_research", "lanes": ["company_positioning", "market_alternatives", "proof_claims"] },
+    { "id": "retell-claim-ledger", "path": "research/retell/claim-ledger.md", "sourceType": "evidence_ledger", "lanes": ["proof_claims", "skeptical_review"] },
+    { "id": "retell-audience-gap-matrix", "path": "research/retell/audience-gap-matrix.md", "sourceType": "gap_matrix", "lanes": ["executive_buyer", "technical_buyer", "proof_claims", "skeptical_review"] },
+    { "id": "retell-company-gap-matrix", "path": "research/retell/gap-matrix.md", "sourceType": "gap_matrix", "lanes": ["company_positioning", "proof_claims", "skeptical_review"] },
+    { "id": "retell-founder-gap-matrix", "path": "research/retell/founder-gap-matrix.md", "sourceType": "gap_matrix", "lanes": ["company_positioning", "proof_claims", "skeptical_review"] },
+    { "id": "retell-market-gap-matrix", "path": "research/retell/market-gap-matrix.md", "sourceType": "gap_matrix", "lanes": ["market_alternatives", "proof_claims", "skeptical_review"] },
+    { "id": "retell-persona-decisions", "path": "research/retell/persona-decisions.md", "sourceType": "decision_record", "lanes": ["executive_buyer", "technical_buyer", "skeptical_review"] },
+    { "id": "retell-prompt-provenance", "path": "research/retell/prompt-provenance.md", "sourceType": "control_metadata", "lanes": ["skeptical_review"] }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "id": "sales-enablement",
+  "version": "1.0.0",
+  "title": "Sales Enablement Deck",
+  "companyId": "retell",
+  "assetType": "executive_champion_deck",
+  "inputSchema": "schemas/run-input.schema.json",
+  "outputSchema": "schemas/run-output.schema.json",
+  "requiredInputs": [
+    "companyId",
+    "assetType",
+    "sellerName",
+    "salesStage",
+    "primaryBuyer",
+    "supportingBuyer",
+    "buyerProblem",
+    "desiredNextStep",
+    "competitorContext",
+    "knownObjections"
+  ],
+  "artifactViews": {
+    "narrative": "narrative",
+    "deck": "slides",
+    "review": "review"
+  },
+  "executor": {
+    "type": "responses_multi_agent",
+    "background": true,
+    "store": true,
+    "maxConcurrency": 7
+  },
+  "stages": [
+    {
+      "id": "scope",
+      "label": "Define scope",
+      "description": "Confirm the buyer, deal stage, problem, and next step.",
+      "view": "scope",
+      "sources": [{ "path": "SKILL.md", "heading": "Before Starting" }]
+    },
+    {
+      "id": "research",
+      "label": "Gather evidence",
+      "description": "Route Retell context across seven focused research workstreams.",
+      "view": "research",
+      "sources": [
+        { "path": "SKILL.md", "heading": "Before Starting" },
+        { "path": "references/research-orchestration.md", "heading": "Research lanes" }
+      ]
+    },
+    {
+      "id": "narrative",
+      "label": "Build narrative",
+      "description": "Turn evidence into a buyer-specific Situation, Complication, Resolution arc.",
+      "view": "narrative",
+      "sources": [
+        { "path": "SKILL.md", "heading": "Sales Deck / Pitch Deck" },
+        { "path": "references/deck-frameworks.md", "heading": "The Storytelling Arc" }
+      ]
+    },
+    {
+      "id": "asset",
+      "label": "Generate deck",
+      "description": "Draft the eleven-slide executive and champion deck.",
+      "view": "deck",
+      "sources": [
+        { "path": "SKILL.md", "heading": "Output Format" },
+        { "path": "references/deck-frameworks.md", "heading": "Slide-by-Slide Template" }
+      ]
+    },
+    {
+      "id": "review",
+      "label": "Validate readiness",
+      "description": "Check buyer relevance, proof, scanability, pricing posture, and next step.",
+      "view": "review",
+      "sources": [
+        { "path": "SKILL.md", "heading": "Core Principles" },
+        { "path": "evals/evals.json", "heading": "eval:1" }
+      ]
+    }
+  ],
+  "workstreams": [
+    { "id": "company_positioning", "label": "Company and positioning", "activity": "Reviewing seller baseline" },
+    { "id": "product_technical", "label": "Product and technical fit", "activity": "Mapping production workflows" },
+    { "id": "executive_buyer", "label": "Executive buyer", "activity": "Identifying business stakes" },
+    { "id": "technical_buyer", "label": "Technical buyer", "activity": "Checking implementation concerns" },
+    { "id": "market_alternatives", "label": "Market and alternatives", "activity": "Reviewing category alternatives" },
+    { "id": "proof_claims", "label": "Proof and claims", "activity": "Reviewing customer proof" },
+    { "id": "skeptical_review", "label": "Skeptical review", "activity": "Checking unsupported claims" }
+  ]
+}
