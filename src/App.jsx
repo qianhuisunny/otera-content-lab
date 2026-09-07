@@ -6,7 +6,7 @@ import { ArtifactGrid } from "./components/ArtifactGrid";
 import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
-import { SalesEnablementWorkspace } from "./components/sales-enablement/SalesEnablementWorkspace.jsx";
+import { SalesEnablementRuntime } from "./components/sales-enablement/SalesEnablementRuntime.jsx";
 import { WritingTopbar } from "./components/writing/WritingTopbar";
 import { WritingRuntime } from "./components/writing/WritingRuntime";
 import { filterArtifacts } from "./data/artifactUtils";
@@ -162,7 +162,7 @@ export function App({
                 session={writingSession}
               />
             ) : activeView === "sales-enablement" ? (
-              <SalesEnablementWorkspace
+              <SalesEnablementRuntime
                 session={salesEnablementSession}
                 dispatch={dispatchSalesEnablement}
                 onExit={handleExitSalesEnablement}

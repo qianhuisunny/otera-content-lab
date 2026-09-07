@@ -219,3 +219,232 @@ test("run status renders public lifecycle copy and accessible failures", async (
     if (status === "failed") assert.match(markup, /role="alert">Please try again./);
   }
 });
+
+test("research exposes seven public findings and source-linked evidence", async () => {
+  const { SalesEnablementWorkspace, session } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...session, activeStepId: "research" }, dispatch() {}, onExit() {},
+  });
+  for (const label of ["Company and positioning", "Product and technical fit", "Executive buyer",
+    "Technical buyer", "Market and alternatives", "Proof and claims", "Skeptical review"]) {
+    assert.ok(markup.includes(label), label);
+  }
+  assert.equal((markup.match(/data-sales-workstream=/g) ?? []).length, 7);
+  assert.match(markup, /Sources &amp; evidence/);
+  assert.match(markup, /Buyer implication/);
+  assert.match(markup, /Safe use/);
+  assert.doesNotMatch(markup, /multi_agent_call|agent_message|chain.of.thought|reasoning/i);
+});
+
+test("narrative renders its arc and all eleven slide rationales", async () => {
+  const { SalesEnablementWorkspace, session } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...session, activeStepId: "narrative" }, dispatch() {}, onExit() {},
+  });
+  for (const label of ["Situation", "Complication", "Resolution"]) assert.ok(markup.includes(label));
+  assert.equal((markup.match(/data-sales-rationale=/g) ?? []).length, 11);
+  assert.match(markup, /Run a bounded pilot with owners/);
+});
+
+test("deck renders eleven ordered slides, speaker notes, and explicit proof posture", async () => {
+  const { SalesEnablementWorkspace, session } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...session, activeStepId: "asset" }, dispatch() {}, onExit() {},
+  });
+  assert.deepEqual([...markup.matchAll(/data-sales-slide="([^"]+)"/g)].map((m) => m[1]),
+    ["slide-1", "slide-2", "slide-3", "slide-4", "slide-5", "slide-6", "slide-7", "slide-8", "slide-9", "slide-10", "slide-11"]);
+  for (const label of ["Production exposes the gaps a demo can hide", "Needs evidence", "Company claim",
+    "Verified", "Inference", "Speaker notes", "retell-technical-owner"]) assert.ok(markup.includes(label), label);
+});
+
+test("review separates passed checks, warnings, blocking gaps, and sources", async () => {
+  const { SalesEnablementWorkspace, session } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...session, activeStepId: "review" }, dispatch() {}, onExit() {},
+  });
+  for (const label of ["Readiness checks", "Passed", "Warnings", "Blocking gaps", "Do not overclaim",
+    "Sources &amp; evidence", "Verified case-study outcome is not yet selected."]) assert.ok(markup.includes(label), label);
+  assert.doesNotMatch(markup, /Approved collateral/);
+});
+
+test("empty and creating live views never display the example artifact", async () => {
+  const { SalesEnablementWorkspace, session } = await workspaceModules();
+  for (const activeStepId of ["research", "narrative", "asset", "review"]) {
+    for (const run of [session.run, { ...session.run, id: "resp_live123456", status: "in_progress", artifact: null }]) {
+      const markup = render(SalesEnablementWorkspace, {
+        session: { ...session, activeStepId, run, mode: "live", requestStatus: "creating" }, dispatch() {}, onExit() {},
+      });
+      assert.match(markup, /This view will populate after the run completes/);
+      assert.doesNotMatch(markup, /Production exposes the gaps a demo can hide|Ready to inspect/);
+    }
+  }
+});
+
+test("request failures and provider wait remain visible on every step", async () => {
+  const { SalesEnablementWorkspace, session } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session: { ...session, mode: "live", error: { message: "Please wait before trying again.", retryAfterSeconds: 12 },
+      retryBlocked: true, activeStepId: "asset" }, dispatch() {}, onExit() {},
+  });
+  assert.match(markup, /role="alert">Please wait before trying again./);
+  assert.match(markup, /12 seconds/);
+});
+
+async function lifecycleHarness(fetchImpl, sleep) {
+  const { createSalesEnablementLifecycle } = await vite.ssrLoadModule(
+    "/src/components/sales-enablement/useSalesEnablementRuntime.js");
+  const { createSalesEnablementSession, salesEnablementReducer, rememberRun, latestActiveRunId } =
+    await vite.ssrLoadModule("/src/data/salesEnablementSession.js");
+  let session = createSalesEnablementSession();
+  const actions = [];
+  const values = new Map();
+  const storage = { getItem: (key) => values.get(key), setItem: (key, value) => values.set(key, value) };
+  const lifecycle = createSalesEnablementLifecycle({ fetchImpl, sleep, storage,
+    dispatch(action) { actions.push(action); session = salesEnablementReducer(session, action); },
+  });
+  return { lifecycle, actions, storage, rememberRun, latestActiveRunId, get session() { return session; } };
+}
+const response = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
+  status, headers: { "content-type": "application/json", ...headers },
+});
+async function publicRun(status = "completed", id = "resp_lifecycle123") {
+  const { session } = await workspaceModules();
+  return { ...structuredClone(session.run), id, status,
+    artifact: status === "completed" ? session.run.artifact : null };
+}
+
+test("live create remembers only public run metadata and polls with one stable request ID", async () => {
+  const queued = await publicRun("queued");
+  const completed = await publicRun();
+  const calls = [];
+  const harness = await lifecycleHarness(async (url, options) => {
+    calls.push([url, options]);
+    return response(options.method === "POST" ? queued : completed);
+  });
+  await harness.lifecycle.runLive(harness.session.input);
+  assert.deepEqual(calls.map(([url, options]) => [url, options.method ?? "GET"]), [
+    ["/api/sales-enablement/runs", "POST"], ["/api/sales-enablement/runs/resp_lifecycle123", "GET"],
+  ]);
+  assert.deepEqual(harness.actions.map(({ type }) => type), ["live-starting", "live-started", "live-updated"]);
+  assert.equal(new Set(harness.actions.map(({ requestId }) => requestId)).size, 1);
+  assert.ok(harness.actions[0].requestId);
+  assert.equal(harness.session.run.status, "completed");
+  assert.equal(harness.session.requestStatus, "idle");
+  const saved = harness.storage.getItem("content-lab:sales-enablement-runs:v1");
+  assert.doesNotMatch(saved, /artifact|bodyBullets|buyerProblem/);
+  assert.equal(harness.latestActiveRunId(harness.storage), null);
+});
+
+test("resume ignores corrupt IDs, follows an active run once, and honors polling Retry-After", async () => {
+  const queued = await publicRun("queued");
+  const completed = await publicRun();
+  const waits = [];
+  let count = 0;
+  const harness = await lifecycleHarness(async () => {
+    count += 1;
+    return count === 1 ? response(queued) : count === 2 ? response({ error: {
+      code: "RATE_LIMITED", message: "Wait before polling.", retryable: true, retryAfterSeconds: 3,
+    } }, 429) : response(completed);
+  }, async (ms) => { waits.push(ms); });
+  harness.storage.setItem("content-lab:sales-enablement-runs:v1", JSON.stringify({ version: 1, runs: [{ id: "../../private", status: "queued" }] }));
+  await harness.lifecycle.resume(harness.session.input);
+  assert.equal(count, 0);
+  harness.rememberRun(harness.storage, queued, harness.session.input);
+  const first = harness.lifecycle.resume(harness.session.input);
+  await harness.lifecycle.resume({ ...harness.session.input, sellerName: "Edited seller" });
+  await first;
+  assert.equal(count, 3);
+  assert.deepEqual(waits, [3000]);
+  assert.equal(harness.session.run.status, "completed");
+  assert.equal(new Set(harness.actions.map(({ requestId }) => requestId)).size, 1);
+});
+
+test("create failures require an explicit retry and each attempt has a new request ID", async () => {
+  let calls = 0;
+  const harness = await lifecycleHarness(async () => {
+    calls += 1;
+    return response({ error: { code: "RATE_LIMITED", message: "Please wait.", retryable: true, retryAfterSeconds: 5 } }, 429);
+  });
+  await harness.lifecycle.runLive(harness.session.input);
+  assert.equal(calls, 1);
+  assert.equal(harness.session.retryBlocked, true);
+  assert.equal(harness.session.error.retryAfterSeconds, 5);
+  const firstId = harness.actions[0].requestId;
+  assert.equal(harness.actions[1].requestId, firstId);
+  await harness.lifecycle.runLive(harness.session.input);
+  assert.equal(calls, 2);
+  assert.notEqual(harness.actions[2].requestId, firstId);
+});
+
+test("new requests abort old creates and late completions cannot change state or storage", async () => {
+  const oldRun = await publicRun("completed", "resp_oldrequest1");
+  const newRun = await publicRun("completed", "resp_newrequest1");
+  let resolveOld;
+  let firstSignal;
+  let calls = 0;
+  const harness = await lifecycleHarness(async (_url, options) => {
+    calls += 1;
+    if (calls === 1) {
+      firstSignal = options.signal;
+      return new Promise((resolve) => { resolveOld = resolve; });
+    }
+    return response(newRun);
+  });
+  const old = harness.lifecycle.runLive(harness.session.input);
+  await harness.lifecycle.runLive(harness.session.input);
+  assert.equal(firstSignal.aborted, true);
+  resolveOld(response(oldRun));
+  await old;
+  assert.equal(harness.session.run.id, "resp_newrequest1");
+  assert.doesNotMatch(harness.storage.getItem("content-lab:sales-enablement-runs:v1"), /resp_oldrequest1/);
+  assert.deepEqual(harness.actions.map(({ type }) => type), ["live-starting", "live-starting", "live-started"]);
+});
+
+test("poll network failures retain a sanitized resumable ID and hide raw exception details", async () => {
+  const queued = await publicRun("queued");
+  let count = 0;
+  const harness = await lifecycleHarness(async () => {
+    count += 1;
+    if (count === 1) return response(queued);
+    throw new Error("raw provider payload and agent_message");
+  });
+  await harness.lifecycle.runLive(harness.session.input);
+  assert.equal(harness.latestActiveRunId(harness.storage), "resp_lifecycle123");
+  assert.equal(harness.session.requestStatus, "idle");
+  assert.doesNotMatch(harness.session.error.message, /raw provider|agent_message/);
+  assert.equal(harness.actions.at(-1).requestId, harness.actions[0].requestId);
+});
+
+test("aborting a resume supports effect remount without replaying a create", async () => {
+  const queued = await publicRun("queued");
+  const completed = await publicRun();
+  let resolveOld;
+  let count = 0;
+  const harness = await lifecycleHarness(async (_url, options) => {
+    assert.notEqual(options.method, "POST");
+    count += 1;
+    if (count === 1) return new Promise((resolve) => { resolveOld = resolve; });
+    return response(completed);
+  });
+  harness.rememberRun(harness.storage, queued, harness.session.input);
+  const first = harness.lifecycle.resume(harness.session.input);
+  harness.lifecycle.abort();
+  await harness.lifecycle.resume(harness.session.input);
+  resolveOld(response(queued));
+  await first;
+  assert.equal(count, 2);
+  assert.equal(harness.session.run.status, "completed");
+});
+
+test("a mismatched polled run cannot overwrite the active run or remembered index", async () => {
+  const queued = await publicRun("queued");
+  const unrelated = await publicRun("completed", "resp_unrelated1");
+  let calls = 0;
+  const harness = await lifecycleHarness(async () => response(++calls === 1 ? queued : unrelated));
+  await harness.lifecycle.runLive(harness.session.input);
+  assert.equal(harness.session.run.id, "resp_lifecycle123");
+  assert.equal(harness.session.requestStatus, "idle");
+  assert.match(harness.session.error.message, /could not be reached/);
+  assert.equal(harness.latestActiveRunId(harness.storage), "resp_lifecycle123");
+  assert.doesNotMatch(harness.storage.getItem("content-lab:sales-enablement-runs:v1"), /resp_unrelated1/);
+});

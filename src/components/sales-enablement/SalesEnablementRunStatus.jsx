@@ -5,15 +5,18 @@ const statusCopy = {
   failed: "Needs attention",
 };
 
-export function SalesEnablementRunStatus({ run, mode }) {
+export function SalesEnablementRunStatus({ run, mode, error, requestStatus, retryBlocked }) {
+  const failure = error ?? run?.error;
+  const status = failure ? "failed" : run?.status ?? "queued";
   return (
     <section className="sales-run-status" aria-live="polite">
       <div>
-        <span className={`sales-status-dot is-${run.status}`} aria-hidden="true" />
+        <span className={`sales-status-dot is-${status}`} aria-hidden="true" />
         <strong>{mode === "example" ? "Example run" : "Live run"}</strong>
-        <span>{statusCopy[run.status]}</span>
+        <span>{requestStatus === "creating" ? "Starting live run" : statusCopy[status]}</span>
       </div>
-      {run.error ? <p role="alert">{run.error.message}</p> : null}
+      {failure ? <p role="alert">{failure.message}</p> : null}
+      {retryBlocked && failure?.retryAfterSeconds > 0 ? <p>Try again after {failure.retryAfterSeconds} seconds. Run live will become available when the wait ends.</p> : null}
     </section>
   );
 }

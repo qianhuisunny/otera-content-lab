@@ -4,6 +4,7 @@ import { App } from "./App.jsx";
 import "@qianhui/ui/styles.css";
 import "./styles.css";
 import "./writing.css";
+import "./sales-enablement.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

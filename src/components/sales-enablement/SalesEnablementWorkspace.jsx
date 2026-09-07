@@ -3,9 +3,23 @@ import { SALES_ENABLEMENT_WORKFLOW } from "../../data/salesEnablementWorkflow.js
 import { SalesEnablementStepNavigator } from "./SalesEnablementStepNavigator.jsx";
 import { SalesEnablementScopeStep } from "./SalesEnablementScopeStep.jsx";
 import { SalesEnablementRunStatus } from "./SalesEnablementRunStatus.jsx";
+import { SalesEnablementResearchStep } from "./SalesEnablementResearchStep.jsx";
+import { SalesEnablementNarrativeStep } from "./SalesEnablementNarrativeStep.jsx";
+import { SalesEnablementDeckPreview } from "./SalesEnablementDeckPreview.jsx";
+import { SalesEnablementReviewStep } from "./SalesEnablementReviewStep.jsx";
+import { SalesEnablementInspector } from "./SalesEnablementInspector.jsx";
+
+const stageViews = {
+  scope: SalesEnablementScopeStep, research: SalesEnablementResearchStep,
+  narrative: SalesEnablementNarrativeStep, deck: SalesEnablementDeckPreview, review: SalesEnablementReviewStep,
+};
 
 export function SalesEnablementWorkspace({ session, dispatch, onExit, onRunLive }) {
   const stage = SALES_ENABLEMENT_WORKFLOW.stages.find(({ id }) => id === session.activeStepId);
+  const StageView = stageViews[stage.view];
+  // The previous artifact remains in session while a create request is pending.
+  const run = session.requestStatus === "creating" || (session.mode === "live" && session.run.id.startsWith("example_")) ? null : session.run;
+  const hasInspector = Boolean(run?.artifact && ["research", "review"].includes(stage.id));
 
   return (
     <section className="sales-enablement-shell" data-sales-enablement-workspace>
@@ -31,18 +45,14 @@ export function SalesEnablementWorkspace({ session, dispatch, onExit, onRunLive 
         activeStepId={session.activeStepId}
         onSelect={(stepId) => dispatch({ type: "select-step", stepId })}
       />
-      <div className="sales-enablement-body">
-        <section aria-labelledby={`sales-stage-${stage.id}`}>
-          {stage.id === "scope" ? (
-            <SalesEnablementScopeStep input={session.input} dispatch={dispatch} />
-          ) : (
-            <section>
-              <h2 id={`sales-stage-${stage.id}`}>{stage.label}</h2>
-              <p>{stage.description}</p>
-            </section>
-          )}
-        </section>
-        <SalesEnablementRunStatus run={session.run} mode={session.mode} />
+      <SalesEnablementRunStatus run={run} mode={session.mode} error={session.error}
+        requestStatus={session.requestStatus} retryBlocked={session.retryBlocked} />
+      <div className={`sales-enablement-body${hasInspector ? "" : " is-wide"}`}>
+        <div className="sales-enablement-main">
+          {stage.view === "scope" ? <StageView input={session.input} dispatch={dispatch} /> :
+            <StageView workflow={SALES_ENABLEMENT_WORKFLOW} run={run} />}
+        </div>
+        <SalesEnablementInspector artifact={run?.artifact} activeStepId={stage.id} />
       </div>
     </section>
   );
