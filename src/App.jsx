@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useState } from "react";
+import { useCallback, useMemo, useReducer, useRef, useState } from "react";
 import { Stack, Target } from "@phosphor-icons/react";
 import { Button, SegmentedControl } from "@qianhui/ui";
 import { AppSidebar } from "./components/AppSidebar";
@@ -40,6 +40,13 @@ export function App({
   const [activeView, setActiveView] = useState(initialView);
   const [filter, setFilter] = useState("all");
   const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const restoreSalesEntryFocus = useRef(false);
+  const salesEnablementEntryRef = useCallback((node) => {
+    if (node && restoreSalesEntryFocus.current) {
+      restoreSalesEntryFocus.current = false;
+      node.focus();
+    }
+  }, []);
   const [writingSession, dispatchWriting] = useReducer(
     writingReducer,
     initialCompanyId,
@@ -59,6 +66,9 @@ export function App({
   );
 
   const handleCompanyChange = (nextCompanyId) => {
+    if (activeView === "sales-enablement" && nextCompanyId !== "retell") {
+      setActiveView("workflow");
+    }
     setActiveCompanyId(nextCompanyId);
     setFilter("all");
     setExpandedIds(new Set());
@@ -83,6 +93,10 @@ export function App({
     setActiveCompanyId("retell");
     setActiveView("sales-enablement");
     resetWritingEntryScroll();
+  };
+  const handleExitSalesEnablement = () => {
+    restoreSalesEntryFocus.current = true;
+    setActiveView("workflow");
   };
 
   return (
@@ -139,6 +153,7 @@ export function App({
               <WorkflowView
                 onOpenLongForm={openLongFormWriter}
                 onOpenSalesEnablement={handleOpenSalesEnablement}
+                salesEnablementEntryRef={salesEnablementEntryRef}
               />
             ) : activeView === "writing" ? (
               <WritingRuntime
@@ -150,7 +165,7 @@ export function App({
               <SalesEnablementWorkspace
                 session={salesEnablementSession}
                 dispatch={dispatchSalesEnablement}
-                onExit={() => setActiveView("workflow")}
+                onExit={handleExitSalesEnablement}
               />
             ) : (
               <>

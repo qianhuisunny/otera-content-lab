@@ -26,6 +26,74 @@ async function workspaceModules() {
   return { SalesEnablementWorkspace, session: createSalesEnablementSession() };
 }
 
+// Render with React's real hook state, invoking the controls returned by App.
+// This keeps transition coverage independent of a browser or a mocked reducer.
+function renderAppTransitions(App, initialProps, actions, inspectFinal = () => {}) {
+  function Harness() {
+    const step = React.useRef(0);
+    const tree = App(initialProps);
+    const action = actions[step.current];
+    if (action) {
+      step.current += 1;
+      action(elements(tree));
+    } else {
+      inspectFinal(elements(tree));
+    }
+    return tree;
+  }
+  return render(Harness);
+}
+
+test("switching away from Retell exits Sales Enablement with coherent company chrome", async () => {
+  const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const markup = renderAppTransitions(App, { initialView: "sales-enablement" }, [
+    (nodes) => nodes.find(({ props }) => props.ariaLabel === "Select company context")
+      .props.onValueChange("otera"),
+  ]);
+  assert.match(markup, /Otera content navigation/);
+  assert.match(markup, /aria-label="Content workflow"/);
+  assert.doesNotMatch(markup, /data-sales-enablement-workspace/);
+});
+
+test("selecting Retell keeps its sales scope, and company switching still works in Context", async () => {
+  const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const salesMarkup = renderAppTransitions(App, { initialView: "sales-enablement" }, [
+    (nodes) => nodes.find(({ props }) => props.ariaLabel === "Select company context")
+      .props.onValueChange("retell"),
+  ]);
+  assert.match(salesMarkup, /data-sales-enablement-workspace/);
+  const contextMarkup = renderAppTransitions(App, {}, [
+    (nodes) => nodes.find(({ props }) => props.ariaLabel === "Select company context")
+      .props.onValueChange("retell"),
+  ]);
+  assert.match(contextMarkup, /Retell AI context artifacts/);
+  assert.doesNotMatch(contextMarkup, /aria-label="Content workflow"/);
+});
+
+test("Back to Workflow restores focus to the mounted Sales Enablement action only once", async () => {
+  const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const { WorkflowView } = await vite.ssrLoadModule("/src/components/WorkflowView.jsx");
+  let focusCount = 0;
+  const markup = renderAppTransitions(App, { initialView: "workflow" }, [
+    (nodes) => nodes.find(({ type }) => type === WorkflowView).props.onOpenSalesEnablement(),
+    (nodes) => nodes.find(({ props }) => props.session?.activeStepId === "scope").props.onExit(),
+  ], (nodes) => {
+    const workflow = nodes.find(({ type }) => type === WorkflowView);
+    const writePhase = elements(WorkflowView(workflow.props))
+      .find(({ props }) => props.phase?.heading === "WRITE");
+    const tile = elements(writePhase.type(writePhase.props))
+      .find(({ props }) => props["aria-label"] === "Open Sales Enablement Deck");
+    assert.equal(typeof tile.props.ref, "function");
+    // Attach the rendered tile's actual ref, as React does on DOM commit.
+    const node = { focus: () => { focusCount += 1; } };
+    tile.props.ref(node);
+    tile.props.ref(null);
+    tile.props.ref(node);
+  });
+  assert.match(markup, /aria-label="Content workflow"/);
+  assert.equal(focusCount, 1);
+});
+
 test("sales deep entry selects Retell and Workflow without adding a primary tab", async () => {
   const { App } = await vite.ssrLoadModule("/src/App.jsx");
   const markup = render(App, { initialView: "sales-enablement" });

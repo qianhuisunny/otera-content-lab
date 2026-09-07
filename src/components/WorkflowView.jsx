@@ -76,7 +76,7 @@ const workflowPhases = [
   },
 ];
 
-function WritePhase({ actions, phase }) {
+function WritePhase({ actions, actionRefs, phase }) {
   return (
     <section
       aria-label={phase.heading}
@@ -96,6 +96,7 @@ function WritePhase({ actions, phase }) {
               className="workflow-action-tile"
               key={item.name}
               onClick={actions[item.action]}
+              ref={actionRefs[item.action]}
               type="button"
             >
               <IconTile {...item} />
@@ -109,16 +110,17 @@ function WritePhase({ actions, phase }) {
   );
 }
 
-export function WorkflowView({ onOpenLongForm, onOpenSalesEnablement }) {
+export function WorkflowView({ onOpenLongForm, onOpenSalesEnablement, salesEnablementEntryRef }) {
   const actions = {
     writing: onOpenLongForm,
     "sales-enablement": onOpenSalesEnablement,
   };
+  const actionRefs = { "sales-enablement": salesEnablementEntryRef };
   return (
     <div aria-label="Content workflow" className="workflow-view">
       {workflowPhases.map((phase) => (
         phase.heading === "WRITE" ? (
-          <WritePhase key={phase.heading} actions={actions} phase={phase} />
+          <WritePhase key={phase.heading} actions={actions} actionRefs={actionRefs} phase={phase} />
         ) : (
           <IconGridSection {...phase} key={phase.heading} />
         )
