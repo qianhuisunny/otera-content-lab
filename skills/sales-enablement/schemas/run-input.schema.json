@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["companyId", "assetType", "sellerName", "salesStage", "primaryBuyer", "supportingBuyer", "buyerProblem", "desiredNextStep", "competitorContext", "knownObjections"],
+  "properties": {
+    "companyId": { "const": "retell" },
+    "assetType": { "const": "executive_champion_deck" },
+    "sellerName": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "salesStage": { "enum": ["discovery", "demo", "evaluation", "proposal"] },
+    "primaryBuyer": { "enum": ["executive_sponsor", "workflow_owner", "technical_owner", "agent_builder", "conversation_quality_owner", "governance_approver", "solution_partner_platform_operator"] },
+    "supportingBuyer": { "enum": ["executive_sponsor", "workflow_owner", "technical_owner", "agent_builder", "conversation_quality_owner", "governance_approver", "solution_partner_platform_operator"] },
+    "buyerProblem": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "desiredNextStep": { "type": "string", "minLength": 1, "maxLength": 1000 },
+    "competitorContext": { "type": "string", "maxLength": 2000 },
+    "knownObjections": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 300 } }
+  }
+}
