@@ -4,3 +4,6 @@ dist/
 *.log
 .vite/
 .worktrees/
+.env*
+!.env.example
+.vercel/

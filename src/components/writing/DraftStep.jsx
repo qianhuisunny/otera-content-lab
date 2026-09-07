@@ -10,7 +10,7 @@ export function downloadResearchMarkdown(scenario = WRITING_SCENARIO) {
   let link;
   try {
     const file = new Blob(
-      [buildResearchMarkdown(scenario.companyId)],
+      [scenario.researchMarkdown ?? buildResearchMarkdown(scenario.companyId)],
       { type: "text/markdown;charset=utf-8" },
     );
     objectUrl = URL.createObjectURL(file);
@@ -60,7 +60,7 @@ export function DraftStep({ onAdvance, scenario = WRITING_SCENARIO }) {
       <WritingPageHeader
         title="Drafted first version"
         description="The approved outline has been drafted with the research and attribution posture preserved for review."
-        meta="25m · 8 sources · 2,940 words · Target: 2,500–3,200"
+        meta={scenario.draftMeta ?? "25m · 8 sources · 2,940 words · Target: 2,500–3,200"}
       />
 
       <section aria-labelledby="writing-activity-title" className="writing-activity">

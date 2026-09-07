@@ -12,6 +12,12 @@ export function createWritingSession(companyId = "otera") {
   };
 }
 
+// Example sessions remain available to isolated UI previews/tests, never the live app.
+export function createLiveWritingSession(companyId = "otera") {
+  return { ...createWritingSession(companyId), live: true, outline: "", articleHtml: "",
+    generation: null, outlineResult: null, draftResult: null };
+}
+
 export function validateBrief(brief) {
   const errors = {};
   if (!brief.format.trim()) errors.format = "Choose an article format.";
@@ -28,20 +34,38 @@ export function canVisitWritingStep(session, step) {
 
 export function writingReducer(state, action) {
   if (action.type === "open-company") {
-    return state.companyId === action.companyId ? state : createWritingSession(action.companyId);
+    return state.companyId === action.companyId ? state : (state.live ? createLiveWritingSession : createWritingSession)(action.companyId);
+  }
+  if (action.type === "generation-start") {
+    if (action.companyId !== state.companyId || !["outline", "draft"].includes(action.stage)) return state;
+    return { ...state, generation: { id: action.id, stage: action.stage, status: "generating" } };
+  }
+  if (["generation-success", "generation-failure", "generation-cancel"].includes(action.type)) {
+    if (action.companyId !== state.companyId || state.generation?.id !== action.id || state.generation.status !== "generating") return state;
+    if (action.type === "generation-cancel") return { ...state, generation: null };
+    if (action.type === "generation-failure") return { ...state, generation: { ...state.generation, status: "error", message: action.message } };
+    if (action.result.companyId !== state.companyId || action.result.stage !== state.generation.stage) return state;
+    if (action.result.stage === "outline") return { ...state, generation: null, outline: action.result.markdown,
+      outlineResult: action.result, draftResult: null, articleHtml: "", currentStep: "outline", furthestStepIndex: 1 };
+    return { ...state, generation: null, articleHtml: action.articleHtml, draftResult: action.result,
+      currentStep: "draft", furthestStepIndex: 2 };
   }
   if (action.type === "set-brief-field") {
-    return { ...state, brief: { ...state.brief, [action.field]: action.value } };
+    return { ...state, ...(state.live ? { furthestStepIndex: 0, outlineResult: null, draftResult: null, generation: null } : {}),
+      brief: { ...state.brief, [action.field]: action.value } };
   }
   if (action.type === "set-audiences") {
-    return { ...state, brief: { ...state.brief, audiences: action.value } };
+    return { ...state, ...(state.live ? { furthestStepIndex: 0, outlineResult: null, draftResult: null, generation: null } : {}),
+      brief: { ...state.brief, audiences: action.value } };
   }
-  if (action.type === "set-outline") return { ...state, outline: action.value };
+  if (action.type === "set-outline") return { ...state, outline: action.value,
+    ...(state.live ? { furthestStepIndex: 1, draftResult: null, generation: null } : {}) };
   if (action.type === "reset-outline") {
     return { ...state, outline: getWritingScenario(state.companyId).outline };
   }
   if (action.type === "set-article-html") return { ...state, articleHtml: action.value };
   if (action.type === "go-to-step") {
+    if (state.generation?.status === "generating") return state;
     return canVisitWritingStep(state, action.step)
       ? { ...state, currentStep: action.step }
       : state;

@@ -440,9 +440,10 @@ test("the writing workspace initializes from the selected company", async (t) =>
 
   assert.match(
     markup,
-    /How to deploy production AI voice agents without losing control of quality or compliance/,
+    /Production voice-agent operations for high-volume customer workflows/,
   );
-  assert.match(markup, /RA-01/);
+  assert.match(markup, /Unsaved draft/);
+  assert.match(markup, /STATUS: Brief/);
   assert.doesNotMatch(markup, /OT-18/);
 });
 

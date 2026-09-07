@@ -7,11 +7,12 @@ import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
 import { WritingTopbar } from "./components/writing/WritingTopbar";
-import { WritingWorkspace } from "./components/writing/WritingWorkspace";
+import { WritingRuntime } from "./components/writing/WritingRuntime";
 import { filterArtifacts } from "./data/artifactUtils";
 import { COMPANY_CATALOG, DEFAULT_COMPANY_ID } from "./data/companyCatalog";
 import { getWritingScenario } from "./data/writingScenario";
-import { createWritingSession, writingReducer } from "./data/writingSession";
+import { createLiveWritingSession, writingReducer } from "./data/writingSession";
+import { liveWritingScenario } from "./data/writingGeneration";
 
 const companySwitcherItems = COMPANY_CATALOG.map(({ id, name }) => ({
   value: id,
@@ -38,7 +39,7 @@ export function App({
   const [writingSession, dispatchWriting] = useReducer(
     writingReducer,
     initialCompanyId,
-    createWritingSession,
+    createLiveWritingSession,
   );
   const company = COMPANY_CATALOG.find(({ id }) => id === activeCompanyId) ?? COMPANY_CATALOG[0];
   const writingScenario = getWritingScenario(writingSession.companyId);
@@ -79,7 +80,7 @@ export function App({
       {activeView === "writing" ? (
         <WritingTopbar
           onExit={() => setActiveView("workflow")}
-          scenario={writingScenario}
+          scenario={liveWritingScenario(writingScenario, writingSession)}
         />
       ) : (
         <header className="app-topbar">
@@ -123,7 +124,7 @@ export function App({
             {activeView === "workflow" ? (
               <WorkflowView onOpenLongForm={openLongFormWriter} />
             ) : activeView === "writing" ? (
-              <WritingWorkspace
+              <WritingRuntime
                 dispatch={dispatchWriting}
                 scenario={writingScenario}
                 session={writingSession}

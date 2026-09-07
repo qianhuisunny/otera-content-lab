@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/client",
+  "installCommand": "npm ci",
+  "fluid": true,
+  "git": { "deploymentEnabled": { "**": false, "main": true } },
+  "functions": {
+    "api/**/*.js": { "maxDuration": 300, "supportsCancellation": true, "includeFiles": "content/**/*.md" }
+  },
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api(?:/.*)?", "status": 404 },
+    { "src": "/(.*)", "dest": "/index.html", "methods": ["GET", "HEAD"] }
+  ]
+}

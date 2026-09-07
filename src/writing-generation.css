@@ -1,0 +1,16 @@
+.writing-runtime { width: 100%; min-width: 0; }
+.writing-generation-notice {
+  margin: 1rem auto;
+  padding: 0.75rem 1rem;
+  max-width: 72rem;
+  scroll-margin-top: 5rem;
+  border: 1px solid var(--qh-border-default, #dededb);
+  border-radius: 0.5rem;
+  color: var(--qh-text-secondary, #62635f);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.writing-generation-notice p { margin: 0.25rem 0; }
+.writing-generation-notice [role="alert"] { color: var(--qh-text-primary, #282925); }
+.writing-generation-notice button { margin-left: 0.5rem; }
+.writing-runtime > [aria-busy="true"] { opacity: 0.6; }
