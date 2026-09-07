@@ -5,6 +5,7 @@ import {
   GraduationCap,
   ImageSquare,
   MonitorPlay,
+  PresentationChart,
   VideoCamera,
 } from "@phosphor-icons/react";
 import { IconGridSection } from "@qianhui/ui";
@@ -47,6 +48,13 @@ const workflowPhases = [
         icon: <Article {...iconProps} />,
         name: "Long-Form Blog Article",
         description: "Craft comprehensive, SEO-optimized long-form blog articles.",
+        action: "writing",
+      },
+      {
+        icon: <PresentationChart {...iconProps} />,
+        name: "Sales Enablement Deck",
+        description: "Build a Retell executive and champion deck from routed evidence.",
+        action: "sales-enablement",
       },
       {
         icon: <MonitorPlay {...iconProps} />,
@@ -68,7 +76,7 @@ const workflowPhases = [
   },
 ];
 
-function WritePhase({ onOpenLongForm, phase }) {
+function WritePhase({ actions, phase }) {
   return (
     <section
       aria-label={phase.heading}
@@ -82,12 +90,12 @@ function WritePhase({ onOpenLongForm, phase }) {
       </header>
       <div className="qh-icon-grid-section__grid">
         {phase.items.map((item) => (
-          item.name === "Long-Form Blog Article" ? (
+          actions[item.action] ? (
             <button
-              aria-label="Open Long-Form Blog Article"
+              aria-label={`Open ${item.name}`}
               className="workflow-action-tile"
               key={item.name}
-              onClick={onOpenLongForm}
+              onClick={actions[item.action]}
               type="button"
             >
               <IconTile {...item} />
@@ -101,12 +109,16 @@ function WritePhase({ onOpenLongForm, phase }) {
   );
 }
 
-export function WorkflowView({ onOpenLongForm }) {
+export function WorkflowView({ onOpenLongForm, onOpenSalesEnablement }) {
+  const actions = {
+    writing: onOpenLongForm,
+    "sales-enablement": onOpenSalesEnablement,
+  };
   return (
     <div aria-label="Content workflow" className="workflow-view">
       {workflowPhases.map((phase) => (
         phase.heading === "WRITE" ? (
-          <WritePhase key={phase.heading} onOpenLongForm={onOpenLongForm} phase={phase} />
+          <WritePhase key={phase.heading} actions={actions} phase={phase} />
         ) : (
           <IconGridSection {...phase} key={phase.heading} />
         )

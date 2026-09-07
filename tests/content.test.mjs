@@ -84,7 +84,7 @@ test("the company catalog keeps Otera and Retell as separate complete contexts",
     appType: "custom",
     logLevel: "silent",
     root: new URL("..", import.meta.url).pathname,
-    server: { middlewareMode: true, hmr: false },
+    server: { middlewareMode: true, hmr: false, warmup: { clientFiles: [] } },
   });
   t.after(() => vite.close());
   const { COMPANY_CATALOG } = await vite.ssrLoadModule("/src/data/companyCatalog.js");
@@ -350,7 +350,7 @@ test("the workflow view uses registered sections and exact screenshot content", 
 
   assert.match(source, /import \{ IconGridSection \} from "@qianhui\/ui";/);
   assert.equal((markup.match(/<section/g) ?? []).length, 3);
-  assert.equal((markup.match(/class="qh-icon-tile"/g) ?? []).length, 7);
+  assert.equal((markup.match(/class="qh-icon-tile"/g) ?? []).length, 8);
 
   for (const heading of ["BRIEF", "WRITE", "PUBLISH"]) {
     assert.match(markup, new RegExp(`aria-label="${heading}"`));
@@ -362,6 +362,7 @@ test("the workflow view uses registered sections and exact screenshot content", 
     "Learning Solution Plan",
     "Video Storyboard",
     "Long-Form Blog Article",
+    "Sales Enablement Deck",
     "E-Learning Storyboard",
     "Illustration Creation",
   ]) {
@@ -376,6 +377,7 @@ test("the workflow view uses registered sections and exact screenshot content", 
     'aria-label="WRITE"',
     'class="qh-icon-tile__name">Video Storyboard<',
     'class="qh-icon-tile__name">Long-Form Blog Article<',
+    'class="qh-icon-tile__name">Sales Enablement Deck<',
     'class="qh-icon-tile__name">E-Learning Storyboard<',
     'aria-label="PUBLISH"',
     'class="qh-icon-tile__name">Illustration Creation<',
@@ -395,6 +397,7 @@ test("the workflow view uses registered sections and exact screenshot content", 
     "Turn briefs into structured content and narratives.",
     "Transform your brief into a visual storyboard with scene-by-scene breakdown.",
     "Craft comprehensive, SEO-optimized long-form blog articles.",
+    "Build a Retell executive and champion deck from routed evidence.",
     "Design e-learning flows and storyboards for engaging learning experiences.",
     "Finalize and publish content across channels.",
     "Create custom illustrations and social graphics for LinkedIn, Xiaohongshu, and other platforms.",

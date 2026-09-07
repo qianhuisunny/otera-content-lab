@@ -41,6 +41,7 @@ export function AppSidebar({
 }) {
   const tabRefs = useRef([]);
   const previousActiveViewRef = useRef(activeView);
+  const workflowSelected = ["workflow", "writing", "sales-enablement"].includes(activeView);
 
   useEffect(() => {
     focusDestinationTabAfterWriting(
@@ -75,8 +76,7 @@ export function AppSidebar({
       <nav aria-label="Content Lab views">
         <div aria-label="Content Lab views" className="sidebar-nav" role="tablist">
           {viewItems.map((item, index) => {
-            const selected = activeView === item.id
-              || (activeView === "writing" && item.id === "workflow");
+            const selected = item.id === "workflow" ? workflowSelected : activeView === item.id;
             return (
               <button
                 aria-controls="content-view-panel"

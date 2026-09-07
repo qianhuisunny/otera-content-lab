@@ -6,6 +6,7 @@ import { ArtifactGrid } from "./components/ArtifactGrid";
 import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
+import { SalesEnablementWorkspace } from "./components/sales-enablement/SalesEnablementWorkspace.jsx";
 import { WritingTopbar } from "./components/writing/WritingTopbar";
 import { WritingRuntime } from "./components/writing/WritingRuntime";
 import { filterArtifacts } from "./data/artifactUtils";
@@ -13,6 +14,7 @@ import { COMPANY_CATALOG, DEFAULT_COMPANY_ID } from "./data/companyCatalog";
 import { getWritingScenario } from "./data/writingScenario";
 import { createLiveWritingSession, writingReducer } from "./data/writingSession";
 import { liveWritingScenario } from "./data/writingGeneration";
+import { createSalesEnablementSession, salesEnablementReducer } from "./data/salesEnablementSession.js";
 
 const companySwitcherItems = COMPANY_CATALOG.map(({ id, name }) => ({
   value: id,
@@ -32,7 +34,9 @@ export function App({
   initialCompanyId = DEFAULT_COMPANY_ID,
   initialView = "context",
 }) {
-  const [activeCompanyId, setActiveCompanyId] = useState(initialCompanyId);
+  const [activeCompanyId, setActiveCompanyId] = useState(
+    initialView === "sales-enablement" ? "retell" : initialCompanyId,
+  );
   const [activeView, setActiveView] = useState(initialView);
   const [filter, setFilter] = useState("all");
   const [expandedIds, setExpandedIds] = useState(() => new Set());
@@ -40,6 +44,11 @@ export function App({
     writingReducer,
     initialCompanyId,
     createLiveWritingSession,
+  );
+  const [salesEnablementSession, dispatchSalesEnablement] = useReducer(
+    salesEnablementReducer,
+    undefined,
+    createSalesEnablementSession,
   );
   const company = COMPANY_CATALOG.find(({ id }) => id === activeCompanyId) ?? COMPANY_CATALOG[0];
   const writingScenario = getWritingScenario(writingSession.companyId);
@@ -69,6 +78,11 @@ export function App({
     resetWritingEntryScroll();
     dispatchWriting({ type: "open-company", companyId: activeCompanyId });
     setActiveView("writing");
+  };
+  const handleOpenSalesEnablement = () => {
+    setActiveCompanyId("retell");
+    setActiveView("sales-enablement");
+    resetWritingEntryScroll();
   };
 
   return (
@@ -117,17 +131,26 @@ export function App({
           tabIndex={-1}
         >
           <div
-            aria-labelledby={activeView === "writing" ? "workflow-tab" : `${activeView}-tab`}
+            aria-labelledby={["writing", "sales-enablement"].includes(activeView) ? "workflow-tab" : `${activeView}-tab`}
             id="content-view-panel"
             role="tabpanel"
           >
             {activeView === "workflow" ? (
-              <WorkflowView onOpenLongForm={openLongFormWriter} />
+              <WorkflowView
+                onOpenLongForm={openLongFormWriter}
+                onOpenSalesEnablement={handleOpenSalesEnablement}
+              />
             ) : activeView === "writing" ? (
               <WritingRuntime
                 dispatch={dispatchWriting}
                 scenario={writingScenario}
                 session={writingSession}
+              />
+            ) : activeView === "sales-enablement" ? (
+              <SalesEnablementWorkspace
+                session={salesEnablementSession}
+                dispatch={dispatchSalesEnablement}
+                onExit={() => setActiveView("workflow")}
               />
             ) : (
               <>
