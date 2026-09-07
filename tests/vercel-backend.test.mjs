@@ -5,6 +5,9 @@ import { createServer } from "vite";
 import { writingApiPlugin } from "../server/vite-writing-api.js";
 import healthHandler from "../api/health.js";
 import generationHandler from "../api/writing/generate.js";
+import createSalesRunHandler from "../api/sales-enablement/runs/index.js";
+import getSalesRunHandler from "../api/sales-enablement/runs/[responseId].js";
+import { RETELL_SALES_ENABLEMENT_INPUT } from "../src/data/salesEnablementScenario.js";
 import { getWritingScenario } from "../src/data/writingScenario.js";
 
 test("Vercel serves built assets and APIs before the SPA and only auto-deploys main", async () => {
@@ -14,7 +17,11 @@ test("Vercel serves built assets and APIs before the SPA and only auto-deploys m
   assert.equal(config.fluid, true);
   assert.equal(config.functions["api/**/*.js"].maxDuration, 300);
   assert.equal(config.functions["api/**/*.js"].supportsCancellation, true);
-  assert.equal(config.functions["api/**/*.js"].includeFiles, "content/**/*.md");
+  assert.deepEqual(config.functions["api/**/*.js"].includeFiles, [
+    "content/**/*.md",
+    "research/retell/**/*.md",
+    "skills/sales-enablement/**/*",
+  ]);
   assert.equal(config.routes[0].handle, "filesystem");
   const missingApi = new RegExp(`^${config.routes[1].src}$`);
   assert.ok(missingApi.test("/api/writing/unknown"));
@@ -28,6 +35,17 @@ test("Vercel Web handlers expose health and explicit method errors", async () =>
   assert.equal((await generationHandler.fetch(new Request("https://lab.example/api/writing/generate"))).status, 405);
 });
 
+test("Vercel sales handlers expose method and configuration errors", async () => {
+  assert.equal((await createSalesRunHandler.fetch(
+    new Request("https://lab.example/api/sales-enablement/runs"),
+  )).status, 405);
+  const response = await getSalesRunHandler.fetch(
+    new Request("https://lab.example/api/sales-enablement/runs/resp_status123"),
+  );
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).error.code, "NOT_CONFIGURED");
+});
+
 test("real local HTTP adapter serves health, input validation and missing-key errors", async (t) => {
   const server = await createServer({ configFile: false, server: { host: "127.0.0.1", port: 0 }, plugins: [writingApiPlugin({})] });
   t.after(() => server.close());
@@ -38,6 +56,15 @@ test("real local HTTP adapter serves health, input validation and missing-key er
   const response = await fetch(`${origin}/api/writing/generate`, { method: "POST", headers: { "content-type": "application/json", origin }, body: JSON.stringify({ companyId: "retell", stage: "outline", brief: getWritingScenario("retell").brief }) });
   assert.equal(response.status, 503);
   assert.equal((await response.json()).error.code, "NOT_CONFIGURED");
+  const createSales = await fetch(`${origin}/api/sales-enablement/runs`, {
+    method: "POST",
+    headers: { "content-type": "application/json", origin },
+    body: JSON.stringify(RETELL_SALES_ENABLEMENT_INPUT),
+  });
+  assert.equal(createSales.status, 503);
+  assert.equal((await createSales.json()).error.code, "NOT_CONFIGURED");
+  const invalidStatus = await fetch(`${origin}/api/sales-enablement/runs/not-a-response`);
+  assert.equal(invalidStatus.status, 404);
   const unknown = await fetch(`${origin}/api/unknown`, { headers: { accept: "text/html" } });
   assert.equal(unknown.status, 404);
   assert.match(unknown.headers.get("content-type"), /json/);

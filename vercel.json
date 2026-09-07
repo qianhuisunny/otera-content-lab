@@ -7,7 +7,15 @@
   "fluid": true,
   "git": { "deploymentEnabled": { "**": false, "main": true } },
   "functions": {
-    "api/**/*.js": { "maxDuration": 300, "supportsCancellation": true, "includeFiles": "content/**/*.md" }
+    "api/**/*.js": {
+      "maxDuration": 300,
+      "supportsCancellation": true,
+      "includeFiles": [
+        "content/**/*.md",
+        "research/retell/**/*.md",
+        "skills/sales-enablement/**/*"
+      ]
+    }
   },
   "routes": [
     { "handle": "filesystem" },
