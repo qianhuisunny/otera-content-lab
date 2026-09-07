@@ -35,7 +35,7 @@
       "label": "Define scope",
       "description": "Confirm the buyer, deal stage, problem, and next step.",
       "view": "scope",
-      "sources": [{ "path": "SKILL.md", "heading": "Before Starting" }]
+      "sources": [{ "path": "runtime/common-principles.md", "heading": "Before Starting" }]
     },
     {
       "id": "research",
@@ -43,8 +43,8 @@
       "description": "Route Retell context across seven focused research workstreams.",
       "view": "research",
       "sources": [
-        { "path": "SKILL.md", "heading": "Before Starting" },
-        { "path": "references/research-orchestration.md", "heading": "Research lanes" }
+        { "path": "runtime/common-principles.md", "heading": "Before Starting" },
+        { "path": "skills/sales-deck/SKILL.md", "heading": "Research Orchestration" }
       ]
     },
     {
@@ -53,8 +53,8 @@
       "description": "Turn evidence into a buyer-specific Situation, Complication, Resolution arc.",
       "view": "narrative",
       "sources": [
-        { "path": "SKILL.md", "heading": "Sales Deck / Pitch Deck" },
-        { "path": "references/deck-frameworks.md", "heading": "The Storytelling Arc" }
+        { "path": "skills/sales-deck/SKILL.md", "heading": "Sales Deck / Pitch Deck" },
+        { "path": "skills/sales-deck/references/deck-frameworks.md", "heading": "The Storytelling Arc" }
       ]
     },
     {
@@ -63,8 +63,8 @@
       "description": "Draft the eleven-slide executive and champion deck.",
       "view": "deck",
       "sources": [
-        { "path": "SKILL.md", "heading": "Output Format" },
-        { "path": "references/deck-frameworks.md", "heading": "Slide-by-Slide Template" }
+        { "path": "skills/sales-deck/SKILL.md", "heading": "Output Format" },
+        { "path": "skills/sales-deck/references/deck-frameworks.md", "heading": "Slide-by-Slide Template" }
       ]
     },
     {
@@ -73,8 +73,8 @@
       "description": "Check buyer relevance, proof, scanability, pricing posture, and next step.",
       "view": "review",
       "sources": [
-        { "path": "SKILL.md", "heading": "Core Principles" },
-        { "path": "evals/evals.json", "heading": "eval:1" }
+        { "path": "runtime/common-principles.md", "heading": "Core Principles" },
+        { "path": "skills/sales-deck/evals/evals.json", "heading": "eval:1" }
       ]
     }
   ],

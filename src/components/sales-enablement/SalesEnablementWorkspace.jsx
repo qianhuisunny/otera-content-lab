@@ -1,6 +1,10 @@
-import { Button } from "@qianhui/ui";
+import { useEffect, useRef } from "react";
 import { SALES_ENABLEMENT_WORKFLOW } from "../../data/salesEnablementWorkflow.js";
-import { SalesEnablementStepNavigator } from "./SalesEnablementStepNavigator.jsx";
+import { WritingPageHeader } from "../writing/WritingPageHeader.jsx";
+import {
+  focusWritingHeadingAfterStepChange,
+  focusWritingHeadingOnEntry,
+} from "../writing/WritingWorkspace.jsx";
 import { SalesEnablementScopeStep } from "./SalesEnablementScopeStep.jsx";
 import { SalesEnablementRunStatus } from "./SalesEnablementRunStatus.jsx";
 import { SalesEnablementResearchStep } from "./SalesEnablementResearchStep.jsx";
@@ -14,7 +18,9 @@ const stageViews = {
   narrative: SalesEnablementNarrativeStep, deck: SalesEnablementDeckPreview, review: SalesEnablementReviewStep,
 };
 
-export function SalesEnablementWorkspace({ session, dispatch, onExit, onRunLive }) {
+export function SalesEnablementWorkspace({ session, dispatch, onRunLive }) {
+  const workspaceRef = useRef(null);
+  const previousStepRef = useRef(session.activeStepId);
   const stage = SALES_ENABLEMENT_WORKFLOW.stages.find(({ id }) => id === session.activeStepId);
   const StageView = stageViews[stage.view];
   // The previous artifact remains in session while a create request is pending.
@@ -23,39 +29,51 @@ export function SalesEnablementWorkspace({ session, dispatch, onExit, onRunLive 
   const retrySeconds = session.cooldown ? Math.max(0, Math.ceil((session.cooldown.until - Date.now()) / 1000)) :
     session.retryBlocked ? session.error?.retryAfterSeconds : 0;
   const retryBlocked = session.retryBlocked || retrySeconds > 0;
+  const busy = ["creating", "polling"].includes(session.requestStatus);
+
+  useEffect(() => {
+    focusWritingHeadingAfterStepChange(
+      previousStepRef.current,
+      session.activeStepId,
+      workspaceRef.current,
+    );
+    previousStepRef.current = session.activeStepId;
+  }, [session.activeStepId]);
+
+  useEffect(() => {
+    focusWritingHeadingOnEntry(workspaceRef.current);
+  }, []);
+
+  const stageContent = stage.view === "scope" ? (
+    <StageView dispatch={dispatch} input={session.input} mode={session.mode}
+      onRunLive={onRunLive} provider={session.provider} requestStatus={session.requestStatus}
+      retryBlocked={retryBlocked} />
+  ) : (
+    <>
+      {!run?.artifact ? <p className="sales-empty">This view will populate after the run completes.</p> : null}
+      <StageView workflow={SALES_ENABLEMENT_WORKFLOW} run={run} />
+    </>
+  );
 
   return (
     <section className="sales-enablement-shell" data-sales-enablement-workspace>
-      <header className="sales-enablement-header">
-        <Button variant="secondary" type="button" onClick={onExit}>Back to Workflow</Button>
-        <div>
-          <span className="eyebrow">Retell AI · Skill-powered workflow</span>
-          <h1>{SALES_ENABLEMENT_WORKFLOW.title}</h1>
-        </div>
-        <div className="sales-mode-actions">
-          <Button variant={session.mode === "example" ? "primary" : "secondary"}
-            type="button" onClick={() => dispatch({ type: "show-example" })}>Example run</Button>
-          <Button type="button" disabled={!session.provider.configured ||
-              session.requestStatus !== "idle" || retryBlocked}
-            onClick={onRunLive}>Run live</Button>
-          {session.provider.checked && !session.provider.configured ? (
-            <small>Live execution is not configured. Example run stays available.</small>
-          ) : null}
-        </div>
-      </header>
-      <SalesEnablementStepNavigator
-        stages={SALES_ENABLEMENT_WORKFLOW.stages}
-        activeStepId={session.activeStepId}
-        onSelect={(stepId) => dispatch({ type: "select-step", stepId })}
-      />
       <SalesEnablementRunStatus run={run} mode={session.mode} error={session.error}
-        requestStatus={session.requestStatus} retryBlocked={retryBlocked} retrySeconds={retrySeconds} />
-      <div className={`sales-enablement-body${hasInspector ? "" : " is-wide"}`}>
-        <div className="sales-enablement-main">
-          {stage.view === "scope" ? <StageView input={session.input} dispatch={dispatch} /> :
-            <StageView workflow={SALES_ENABLEMENT_WORKFLOW} run={run} />}
+        provider={session.provider} requestStatus={session.requestStatus}
+        retryBlocked={retryBlocked} retrySeconds={retrySeconds} />
+      <div aria-busy={busy} inert={busy ? true : undefined}>
+        <div className="writing-workspace" ref={workspaceRef}>
+          <section className="writing-page">
+            <WritingPageHeader description={stage.description} id={`sales-stage-${stage.id}`}
+              meta={stage.view === "research" ? `${SALES_ENABLEMENT_WORKFLOW.workstreams.length} parallel specialists` : stage.view === "scope" ? "Brief" : "Working draft"}
+              title={stage.label} />
+            {hasInspector ? (
+              <div className="review-layout">
+                <div className="sales-enablement-main">{stageContent}</div>
+                <SalesEnablementInspector artifact={run.artifact} activeStepId={stage.id} />
+              </div>
+            ) : stageContent}
+          </section>
         </div>
-        <SalesEnablementInspector artifact={run?.artifact} activeStepId={stage.id} />
       </div>
     </section>
   );

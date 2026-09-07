@@ -1,3 +1,5 @@
+import { Button } from "@qianhui/ui";
+
 const buyerOptions = [
   ["executive_sponsor", "Executive sponsor"],
   ["workflow_owner", "Workflow owner"],
@@ -22,7 +24,15 @@ const scopeFields = [
   { name: "knownObjections", label: "Known objections (one per line)", type: "textarea" },
 ];
 
-export function SalesEnablementScopeStep({ input, dispatch }) {
+export function SalesEnablementScopeStep({
+  input,
+  dispatch,
+  mode,
+  onRunLive,
+  provider,
+  requestStatus = "idle",
+  retryBlocked = false,
+}) {
   const updateField = (event) => {
     const { name: field, value } = event.target;
     dispatch({ type: "set-input", field,
@@ -30,16 +40,17 @@ export function SalesEnablementScopeStep({ input, dispatch }) {
   };
 
   return (
-    <section className="sales-scope-step">
-      <h2 id="sales-stage-scope">Deal scope</h2>
-      <form className="sales-scope-form" onSubmit={(event) => event.preventDefault()}>
+    <form className="sales-scope-form writing-form" onSubmit={(event) => {
+      event.preventDefault();
+      if (provider?.configured && requestStatus === "idle" && !retryBlocked) onRunLive?.();
+    }}>
         {scopeFields.map(({ name, label, type, options }) => {
           const props = {
             id: `sales-${name}`, name, onChange: updateField,
             value: name === "knownObjections" ? input[name].join("\n") : input[name],
           };
           return (
-            <div className="sales-field" key={name}>
+            <div className="sales-field writing-field" key={name}>
               <label htmlFor={props.id}>{label}</label>
               {type === "select" ? (
                 <select {...props}>
@@ -51,7 +62,13 @@ export function SalesEnablementScopeStep({ input, dispatch }) {
             </div>
           );
         })}
-      </form>
-    </section>
+      <div className="writing-actions">
+        <Button variant={mode === "example" ? "primary" : "secondary"}
+          type="button" onClick={() => dispatch({ type: "show-example" })}>Example run</Button>
+        <Button type="submit" disabled={!provider?.configured || requestStatus !== "idle" || retryBlocked}>
+          Run live
+        </Button>
+      </div>
+    </form>
   );
 }

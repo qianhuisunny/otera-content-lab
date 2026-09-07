@@ -1,10 +1,6 @@
-import { SalesEnablementArtifactStage } from "./SalesEnablementArtifactStage.jsx";
-
 export function SalesEnablementNarrativeStep({ workflow, run }) {
   const artifact = run?.artifact;
-  return (
-    <SalesEnablementArtifactStage workflow={workflow} run={run} view="narrative">
-      {artifact ? <>
+  return artifact ? <>
         <div className="sales-narrative-arc">
           {[["situation", "Situation"], ["complication", "Complication"], ["resolution", "Resolution"]].map(([key, label], index) => (
             <article key={key}><span className="eyebrow">0{index + 1}</span><h3>{label}</h3><p>{artifact.narrative[key]}</p></article>
@@ -19,7 +15,5 @@ export function SalesEnablementNarrativeStep({ workflow, run }) {
             </li>;
           })}
         </ol>
-      </> : null}
-    </SalesEnablementArtifactStage>
-  );
+      </> : null;
 }

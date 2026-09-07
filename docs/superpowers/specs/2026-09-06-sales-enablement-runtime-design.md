@@ -9,7 +9,7 @@ The implementation must demonstrate one source of truth rather than a second set
 - the Skill owns judgment, research policy, deck structure, and review criteria;
 - a small workflow manifest maps those Skill sections to visible UI stages;
 - the frontend renders the manifest and run state;
-- the server loads the same Skill package when it starts a Responses run;
+- the server loads the scoped common guidance and sales-deck leaf package when it starts a Responses run;
 - OpenAI stores the background Response, while the browser keeps only a small run index.
 
 This feature is an internal prototype. It does not add authentication, team sharing, a durable job queue, or a general workflow builder.
@@ -18,11 +18,14 @@ This feature is an internal prototype. It does not add authentication, team shar
 
 Use `sales-enablement` version `2.0.1` from the Corey Haines Marketing Skills repository. Preserve the upstream MIT license and attribution in the vendored Skill directory.
 
-The demo uses only the sales-deck path:
+The root `SKILL.md`, `references/deck-frameworks.md`, and `evals/evals.json`
+remain byte-for-byte provenance snapshots. The runtime does not load them. The
+demo uses only four scoped judgment sources:
 
-- `SKILL.md` provides the initial context requirements, four core principles, buyer-specific customization, sales-deck framework, output contract, and task-specific questions;
-- `references/deck-frameworks.md` provides the Situation → Complication → Resolution arc and eleven-slide structure;
-- `evals/evals.json` provides reusable assertions for deck completeness and buyer tailoring;
+- `runtime/common-principles.md` provides the initial context requirements and four shared principles;
+- `skills/sales-deck/SKILL.md` provides deck-specific judgment, buyer customization, output requirements, and seven-lane research policy;
+- `skills/sales-deck/references/deck-frameworks.md` provides the Situation → Complication → Resolution arc and eleven-slide structure;
+- `skills/sales-deck/evals/evals.json` contains only the deck completeness and buyer-tailoring eval (`id: 1`);
 - Retell's existing company, market, ICP, persona, founder, and claim-ledger material supplies the initial product-marketing evidence pack.
 
 The upstream source remains recognizable and separately attributed. Content Lab-specific orchestration and UI metadata live beside it rather than being inserted into React components.
@@ -33,18 +36,26 @@ Create a repository-owned package with this shape:
 
 ```text
 skills/sales-enablement/
-├── SKILL.md
+├── SKILL.md                         # byte-for-byte upstream snapshot
 ├── LICENSE
 ├── workflow.json
 ├── context-sources.json
+├── runtime/
+│   └── common-principles.md
+├── skills/
+│   └── sales-deck/
+│       ├── SKILL.md
+│       ├── references/
+│       │   └── deck-frameworks.md
+│       └── evals/
+│           └── evals.json
 ├── references/
-│   ├── deck-frameworks.md
-│   └── research-orchestration.md
+│   └── deck-frameworks.md           # byte-for-byte upstream snapshot
 ├── schemas/
 │   ├── run-input.schema.json
 │   └── run-output.schema.json
 └── evals/
-    └── evals.json
+    └── evals.json                   # byte-for-byte upstream snapshot
 ```
 
 `workflow.json` is Content Lab's adapter contract. It contains stable IDs, short UI labels, section references, required inputs, execution configuration, and output-view metadata. It must not contain rewritten versions of the Skill's prose instructions.
@@ -53,11 +64,11 @@ Each manifest stage points to its governing source:
 
 | Stage | Visible label | Governing source |
 | --- | --- | --- |
-| `scope` | Define scope | `SKILL.md#before-starting` |
-| `research` | Gather evidence | `SKILL.md#before-starting` and `references/research-orchestration.md` |
-| `narrative` | Build narrative | `SKILL.md#sales-deck--pitch-deck` and `references/deck-frameworks.md` |
-| `asset` | Generate deck | `SKILL.md#output-format` and `references/deck-frameworks.md` |
-| `review` | Validate readiness | `SKILL.md#core-principles` and `evals/evals.json` |
+| `scope` | Define scope | `runtime/common-principles.md#before-starting` |
+| `research` | Gather evidence | common `Before Starting` and `skills/sales-deck/SKILL.md#research-orchestration` |
+| `narrative` | Build narrative | leaf `Sales Deck / Pitch Deck` and leaf `references/deck-frameworks.md` |
+| `asset` | Generate deck | leaf `Output Format` and leaf `references/deck-frameworks.md` |
+| `review` | Validate readiness | common `Core Principles` and leaf `evals/evals.json#eval:1` |
 
 The manifest declares `executor: responses_multi_agent`, `background: true`, and `maxConcurrency: 7`. The server owns enforcement of those execution settings; the browser treats them as display metadata.
 

@@ -76,6 +76,20 @@ test("untrusted packets stay in user input beneath isolated seven-child server i
   assert.equal(captured.body.input.length, 1);
   assert.equal(captured.body.input[0].role, "user");
   assert.match(captured.body.input[0].content, /PRIVATE_PACKET/);
+  const providerInput = JSON.parse(captured.body.input[0].content);
+  assert.equal(providerInput.skillPacket, bundle.skillPacket);
+  for (const marker of ["common-sales-principles", "sales-deck-skill",
+    "deck-reference", "deck-evaluation-reference"]) {
+    assert.match(providerInput.skillPacket, new RegExp("<" + marker + "(?:\\s|>)"));
+  }
+  assert.equal(providerInput.skillPacket.match(/trust="untrusted_reference_data"/g)?.length, 4);
+  for (const expected of ["Sales Uses What Sales Trusts", "10-12 Slide Framework",
+    "Slide-by-Slide Template", '"id": 1']) {
+    assert.match(providerInput.skillPacket, new RegExp(expected));
+  }
+  assert.doesNotMatch(providerInput.skillPacket,
+    /## (?:One-Pagers \/ Leave-Behinds|Objection Handling Docs|ROI Calculators & Value Props|Demo Scripts & Talk Tracks|Case Study Briefs \(Sales Format\)|Proposal Templates|Sales Playbooks|Buyer Persona Cards)/);
+  assert.doesNotMatch(providerInput.skillPacket, /"id":\s*[2-6]\b/);
   assert.doesNotMatch(captured.body.instructions, /PRIVATE_PACKET/);
   assert.match(captured.body.instructions, /fork_turns.*none/);
   assert.match(captured.body.instructions, /no single-agent fallback/i);

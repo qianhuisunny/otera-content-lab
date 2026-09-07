@@ -2,7 +2,7 @@ export function SalesEnablementInspector({ artifact, activeStepId }) {
   if (!artifact || !["research", "review"].includes(activeStepId)) return null;
   const evidence = artifact.research.flatMap((finding) => finding.evidence);
   return (
-    <aside className="sales-enablement-inspector" aria-label="Sources and evidence">
+    <aside className="coverage-panel sales-enablement-inspector" aria-label="Sources and evidence">
       <span className="eyebrow">Context bank</span>
       <h2>Sources &amp; evidence</h2>
       <p className="sales-meta">{artifact.sources.length} sources · {evidence.length} evidence units</p>

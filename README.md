@@ -39,10 +39,13 @@ npm run test:sites
 ## Skill-powered Sales Enablement demo
 
 The Retell Sales Enablement Deck is generated from one canonical package at
-`skills/sales-enablement`. Its `skills/sales-enablement/workflow.json` maps
-Skill sections to the five UI steps; it does not duplicate their prompts. The
-server loads the same Skill, the deck framework, the seven-lane research
-policy, and every source listed in `context-sources.json`.
+`skills/sales-enablement`. The root `SKILL.md`, deck reference, and eval file
+remain byte-for-byte upstream provenance snapshots and are not runtime inputs.
+`skills/sales-enablement/workflow.json` maps the five UI steps to a small
+runtime allowlist: shared sales principles plus the `skills/sales-deck` leaf
+Skill, its deck framework, and its deck-only eval. The leaf owns the seven-lane
+research policy. The server also loads every source listed in
+`context-sources.json`.
 
 `Example run` is deterministic and works offline. `Run live` requires
 `OPENAI_API_KEY` and uses `OPENAI_SALES_ENABLEMENT_MODEL`. The live path starts

@@ -1,0 +1,20 @@
+{
+  "skill_name": "sales-deck",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Help me create a sales deck for our B2B SaaS product. We sell an employee engagement platform to HR directors at companies with 500-5000 employees. Our main differentiator is real-time pulse surveys with AI-powered insights.",
+      "expected_output": "Should check for product-marketing context first. Should apply the 10-12 slide sales deck framework: Problem, Cost, Shift, Approach, Product Walkthrough, Proof, Case Study, Implementation, ROI/Value, Pricing, and Next Steps. Should tailor the deck to the HR director audience and employee engagement space. Should incorporate the differentiator (real-time pulse surveys + AI insights). Should provide slide-by-slide content recommendations with speaker notes and visual direction.",
+      "assertions": [
+        "Checks for product-marketing context",
+        "Applies the 10-12 slide framework",
+        "Includes Problem, Solution, Proof, Pricing, and Next Steps slides",
+        "Tailors to the named buyer audience",
+        "Incorporates the stated differentiator",
+        "Provides slide-by-slide content",
+        "Includes speaker notes or talking points"
+      ],
+      "files": []
+    }
+  ]
+}

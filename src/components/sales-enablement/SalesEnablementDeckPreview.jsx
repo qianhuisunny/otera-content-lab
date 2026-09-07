@@ -1,9 +1,12 @@
-import { proofLabels, SalesEnablementArtifactStage } from "./SalesEnablementArtifactStage.jsx";
+const proofLabels = {
+  verified: "Verified",
+  company_claim: "Company claim",
+  inference: "Inference",
+  unresolved: "Needs evidence",
+};
 
 export function SalesEnablementDeckPreview({ workflow, run }) {
-  return (
-    <SalesEnablementArtifactStage workflow={workflow} run={run} view="deck">
-      {run?.artifact ? <ol className="sales-slide-list">
+  return run?.artifact ? <ol className="sales-slide-list">
         {run.artifact.slides.map((slide) => (
           <li key={slide.id} data-sales-slide={slide.id}>
             <article className="sales-slide-card" aria-labelledby={`sales-${slide.id}`}>
@@ -16,7 +19,5 @@ export function SalesEnablementDeckPreview({ workflow, run }) {
             </article>
           </li>
         ))}
-      </ol> : null}
-    </SalesEnablementArtifactStage>
-  );
+      </ol> : null;
 }

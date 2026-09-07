@@ -44,24 +44,25 @@ function renderAppTransitions(App, initialProps, actions, inspectFinal = () => {
   return render(Harness);
 }
 
-test("switching away from Retell exits Sales Enablement with coherent company chrome", async () => {
+test("Sales Enablement uses the dedicated workflow topbar and restores company chrome on exit", async () => {
   const { App } = await vite.ssrLoadModule("/src/App.jsx");
+  const salesMarkup = render(App, { initialView: "sales-enablement" });
+  assert.match(salesMarkup, /class="writing-topbar"/);
+  assert.match(salesMarkup, /CREATING DECK FOR/);
+  assert.match(salesMarkup, /STATUS: Ready to inspect/);
+  assert.doesNotMatch(salesMarkup, /class="app-topbar"|Select company context/);
+
   const markup = renderAppTransitions(App, { initialView: "sales-enablement" }, [
-    (nodes) => nodes.find(({ props }) => props.ariaLabel === "Select company context")
-      .props.onValueChange("otera"),
+    (nodes) => nodes.find(({ props }) => props.session?.activeStepId === "scope")
+      .props.onExit(),
   ]);
-  assert.match(markup, /Otera content navigation/);
+  assert.match(markup, /Select company context/);
   assert.match(markup, /aria-label="Content workflow"/);
   assert.doesNotMatch(markup, /data-sales-enablement-workspace/);
 });
 
-test("selecting Retell keeps its sales scope, and company switching still works in Context", async () => {
+test("company switching remains available outside the dedicated Sales workspace", async () => {
   const { App } = await vite.ssrLoadModule("/src/App.jsx");
-  const salesMarkup = renderAppTransitions(App, { initialView: "sales-enablement" }, [
-    (nodes) => nodes.find(({ props }) => props.ariaLabel === "Select company context")
-      .props.onValueChange("retell"),
-  ]);
-  assert.match(salesMarkup, /data-sales-enablement-workspace/);
   const contextMarkup = renderAppTransitions(App, {}, [
     (nodes) => nodes.find(({ props }) => props.ariaLabel === "Select company context")
       .props.onValueChange("retell"),
@@ -102,6 +103,9 @@ test("sales deep entry selects Retell and Workflow without adding a primary tab"
   assert.match(markup, /Retell AI content navigation/);
   assert.match(markup, /Example run/);
   assert.match(markup, /Run live/);
+  assert.match(markup, /class="content-library writing-main"/);
+  assert.match(markup, /aria-label="Sales enablement workflow" class="writing-sidebar"/);
+  assert.doesNotMatch(markup, /class="sales-steps"|class="sales-enablement-header"/);
   const navigation = markup.match(/<nav[\s\S]*?<\/nav>/)?.[0] ?? "";
   assert.equal((navigation.match(/role="tab"/g) ?? []).length, 2);
   assert.match(navigation, /<button[^>]*aria-selected="true"[^>]*id="workflow-tab"[^>]*tabindex="0"/);
@@ -117,15 +121,41 @@ test("Workflow renders actions only for supplied callbacks", async () => {
   assert.match(markup, /<button[^>]*aria-label="Open Long-Form Blog Article"/);
 });
 
-test("the scope shell renders the five canonical stages once and the editable scenario", async () => {
-  const { SalesEnablementWorkspace, session } = await workspaceModules();
-  const markup = render(SalesEnablementWorkspace, { session, dispatch() {}, onExit() {} });
+test("the App sidebar renders the five Sales stages in the Blog workflow anatomy", async () => {
+  const { AppSidebar } = await vite.ssrLoadModule("/src/components/AppSidebar.jsx");
+  const { COMPANY_CATALOG } = await vite.ssrLoadModule("/src/data/companyCatalog.js");
+  const { createSalesEnablementSession } = await vite.ssrLoadModule("/src/data/salesEnablementSession.js");
+  const retell = COMPANY_CATALOG.find(({ id }) => id === "retell");
+  const markup = render(AppSidebar, {
+    activeView: "sales-enablement", company: retell, onViewChange() {},
+    onSalesEnablementStepChange() {}, salesEnablementSession: createSalesEnablementSession(),
+  });
+  for (const phase of ["01 BRIEF IT", "02 BUILD IT", "03 REVIEW IT"]) {
+    assert.ok(markup.includes(phase), phase);
+  }
   for (const label of ["Define scope", "Gather evidence", "Build narrative", "Generate deck", "Validate readiness"]) {
     assert.equal(markup.split(label).length - 1, 1, label);
   }
+  assert.match(markup, /aria-label="Sales enablement workflow" class="writing-sidebar"/);
+  assert.equal((markup.match(/aria-current="step"/g) ?? []).length, 1);
+  assert.equal((markup.match(/data-state="completed"/g) ?? []).length, 4);
+});
+
+test("the scope screen uses the Blog page, form, and action anatomy", async () => {
+  const { SalesEnablementWorkspace, session } = await workspaceModules();
+  const markup = render(SalesEnablementWorkspace, {
+    session, dispatch() {}, onExit() {}, onRunLive() {},
+  });
+  assert.match(markup, /class="writing-workspace"/);
+  assert.match(markup, /class="writing-page"/);
+  assert.match(markup, /class="writing-page-header"/);
+  assert.match(markup, /<h1[^>]*id="sales-stage-scope"[^>]*tabindex="-1"[^>]*>Define scope<\/h1>/);
+  assert.match(markup, /class="sales-scope-form writing-form"/);
+  assert.equal((markup.match(/class="sales-field writing-field"/g) ?? []).length, 8);
+  assert.match(markup, /class="writing-actions"[\s\S]*Example run[\s\S]*Run live/);
   assert.match(markup, /Move an AI voice-agent workflow/);
   assert.doesNotMatch(markup, /Situation-Specific, Not Generic|Sales Uses What Sales Trusts/);
-  assert.equal((markup.match(/aria-current="step"/g) ?? []).length, 1);
+  assert.doesNotMatch(markup, /sales-enablement-header|sales-steps/);
 });
 
 test("non-scope steps show their manifest overview", async () => {
@@ -133,18 +163,31 @@ test("non-scope steps show their manifest overview", async () => {
   const markup = render(SalesEnablementWorkspace, {
     session: { ...session, activeStepId: "research" }, dispatch() {}, onExit() {},
   });
-  assert.match(markup, /<h2 id="sales-stage-research">Gather evidence<\/h2>/);
+  assert.match(markup, /<h1[^>]*id="sales-stage-research"[^>]*>Gather evidence<\/h1>/);
   assert.match(markup, /Route Retell context across seven focused research workstreams./);
   assert.doesNotMatch(markup, /name="sellerName"/);
 });
 
-test("step keyboard navigation supports both arrows, wrapping, Home, and End", async () => {
-  const { getNextSalesStepIndex } = await vite.ssrLoadModule(
-    "/src/components/sales-enablement/SalesEnablementStepNavigator.jsx");
-  for (const [key, index, expected] of [
-    ["ArrowRight", 1, 2], ["ArrowLeft", 0, 4], ["ArrowDown", 4, 0],
-    ["ArrowUp", 2, 1], ["Home", 3, 0], ["End", 1, 4], ["Escape", 1, null],
-  ]) assert.equal(getNextSalesStepIndex(key, index, 5), expected);
+test("pending Sales stages use the Blog sidebar locked state", async () => {
+  const { AppSidebar } = await vite.ssrLoadModule("/src/components/AppSidebar.jsx");
+  const { COMPANY_CATALOG } = await vite.ssrLoadModule("/src/data/companyCatalog.js");
+  const { createSalesEnablementSession } = await vite.ssrLoadModule("/src/data/salesEnablementSession.js");
+  const session = createSalesEnablementSession();
+  session.mode = "live";
+  session.run = {
+    ...session.run, id: "resp_pending123", status: "queued", stageId: "scope", artifact: null,
+    stages: [
+      { id: "scope", status: "active" },
+      ...["research", "narrative", "asset", "review"].map((id) => ({ id, status: "pending" })),
+    ],
+  };
+  const markup = render(AppSidebar, {
+    activeView: "sales-enablement",
+    company: COMPANY_CATALOG.find(({ id }) => id === "retell"),
+    onViewChange() {}, onSalesEnablementStepChange() {}, salesEnablementSession: session,
+  });
+  assert.equal((markup.match(/data-state="locked"/g) ?? []).length, 4);
+  assert.equal((markup.match(/disabled=""/g) ?? []).length, 4);
 });
 
 test("scope controls expose labels and edit every input through the reducer contract", async () => {
@@ -266,6 +309,10 @@ test("research exposes seven public findings and source-linked evidence", async 
     assert.ok(markup.includes(label), label);
   }
   assert.equal((markup.match(/data-sales-workstream=/g) ?? []).length, 7);
+  assert.equal((markup.match(/class="activity-card sales-workstream"/g) ?? []).length, 7);
+  assert.match(markup, /class="writing-activity"/);
+  assert.match(markup, /class="review-layout"/);
+  assert.match(markup, /class="coverage-panel sales-enablement-inspector"/);
   assert.match(markup, /Sources &amp; evidence/);
   assert.match(markup, /Buyer implication/);
   assert.match(markup, /Safe use/);
@@ -300,6 +347,8 @@ test("review separates passed checks, warnings, blocking gaps, and sources", asy
   });
   for (const label of ["Readiness checks", "Passed", "Warnings", "Blocking gaps", "Do not overclaim",
     "Sources &amp; evidence", "Verified case-study outcome is not yet selected."]) assert.ok(markup.includes(label), label);
+  assert.match(markup, /class="review-layout"/);
+  assert.match(markup, /class="coverage-panel sales-enablement-inspector"/);
   assert.doesNotMatch(markup, /Approved collateral/);
 });
 
@@ -311,6 +360,8 @@ test("empty and creating live views never display the example artifact", async (
         session: { ...session, activeStepId, run, mode: "live", requestStatus: "creating" }, dispatch() {}, onExit() {},
       });
       assert.match(markup, /This view will populate after the run completes/);
+      assert.match(markup, /aria-busy="true" inert=""/);
+      assert.match(markup, /class="writing-generation-notice sales-run-notice"/);
       assert.doesNotMatch(markup, /Production exposes the gaps a demo can hide|Ready to inspect/);
     }
   }
@@ -613,7 +664,8 @@ test("Example during a polling wait retains the absolute cooldown until an expli
   await harness.lifecycle.releaseCooldown(cooldown);
   assert.equal(calls.length, 2);
   const { SalesEnablementWorkspace } = await workspaceModules();
-  const props = () => ({ session: { ...harness.session, provider: { checked: true, configured: true } }, dispatch() {}, onExit() {} });
+  const props = () => ({ session: { ...harness.session, activeStepId: "scope",
+    provider: { checked: true, configured: true } }, dispatch() {}, onExit() {} });
   const markup = render(SalesEnablementWorkspace, props());
   assert.match(markup, /4 seconds/);
   assert.match(markup, /<button[^>]*disabled[^>]*>Run live<\/button>/);

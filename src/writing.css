@@ -230,6 +230,7 @@
 }
 
 .writing-field input,
+.writing-field select,
 .writing-field textarea,
 .writing-menu-trigger {
   width: 100%;
@@ -241,6 +242,7 @@
 }
 
 .writing-field input,
+.writing-field select,
 .writing-field textarea {
   min-width: 0;
   font-size: var(--qh-text-body);
@@ -252,6 +254,7 @@
 }
 
 .writing-field input:focus-visible,
+.writing-field select:focus-visible,
 .writing-field textarea:focus-visible,
 .writing-menu-trigger:focus-visible,
 .writing-menu-card button:focus-visible,

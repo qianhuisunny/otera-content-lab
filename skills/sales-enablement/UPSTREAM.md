@@ -8,7 +8,20 @@
 - Skill last updated: 2026-06-16
 - License: MIT, Copyright © 2025 Corey Haines
 
-The allowlist is `LICENSE`, `SKILL.md`, `references/deck-frameworks.md`, and
-`evals/evals.json`. To update, review a new upstream commit, copy only these
-four files byte-for-byte, update the commit and versions here, then update the
-pinned hashes in `tests/sales-enablement-manifest.test.mjs`.
+The provenance snapshot allowlist is `LICENSE`, `SKILL.md`,
+`references/deck-frameworks.md`, and `evals/evals.json`. To update, review a new
+upstream commit, copy only these four files byte-for-byte, update the commit and
+versions here, then update the pinned hashes in
+`tests/sales-enablement-manifest.test.mjs`.
+
+These snapshot files are not runtime prompt inputs. Content Lab's scoped,
+derived runtime sources are:
+
+- `runtime/common-principles.md`;
+- `skills/sales-deck/SKILL.md`;
+- `skills/sales-deck/references/deck-frameworks.md`;
+- `skills/sales-deck/evals/evals.json`.
+
+The server keeps those four paths as an explicit allowlist. Review the derived
+slice whenever the pinned upstream snapshot changes; do not point the runtime
+back to the umbrella Skill or full eval suite.

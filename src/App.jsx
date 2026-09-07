@@ -7,6 +7,7 @@ import { CollectionHeader } from "./components/CollectionHeader";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { WorkflowView } from "./components/WorkflowView";
 import { SalesEnablementRuntime } from "./components/sales-enablement/SalesEnablementRuntime.jsx";
+import { SalesEnablementTopbar } from "./components/sales-enablement/SalesEnablementTopbar.jsx";
 import { WritingTopbar } from "./components/writing/WritingTopbar";
 import { WritingRuntime } from "./components/writing/WritingRuntime";
 import { filterArtifacts } from "./data/artifactUtils";
@@ -110,6 +111,8 @@ export function App({
           onExit={() => setActiveView("workflow")}
           scenario={liveWritingScenario(writingScenario, writingSession)}
         />
+      ) : activeView === "sales-enablement" ? (
+        <SalesEnablementTopbar onExit={handleExitSalesEnablement} session={salesEnablementSession} />
       ) : (
         <header className="app-topbar">
           <div className="app-brand">
@@ -136,11 +139,13 @@ export function App({
           company={company}
           onViewChange={setActiveView}
           onWritingStepChange={(step) => dispatchWriting({ type: "go-to-step", step })}
+          onSalesEnablementStepChange={(stepId) => dispatchSalesEnablement({ type: "select-step", stepId })}
+          salesEnablementSession={salesEnablementSession}
           writingSession={writingSession}
         />
 
         <main
-          className={`content-library${activeView === "writing" ? " writing-main" : ""}`}
+          className={`content-library${["writing", "sales-enablement"].includes(activeView) ? " writing-main" : ""}`}
           id="content-library"
           tabIndex={-1}
         >

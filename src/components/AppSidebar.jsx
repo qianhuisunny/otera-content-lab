@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { WritingSidebar } from "./writing/WritingSidebar.jsx";
+import { SalesEnablementSidebar } from "./sales-enablement/SalesEnablementSidebar.jsx";
 
 const viewItems = [
   { id: "context", label: "Context" },
@@ -37,6 +38,8 @@ export function AppSidebar({
   company,
   onViewChange,
   onWritingStepChange,
+  onSalesEnablementStepChange,
+  salesEnablementSession,
   writingSession,
 }) {
   const tabRefs = useRef([]);
@@ -101,6 +104,11 @@ export function AppSidebar({
 
       {activeView === "writing" && writingSession ? (
         <WritingSidebar onStepChange={onWritingStepChange} session={writingSession} />
+      ) : null}
+
+      {activeView === "sales-enablement" && salesEnablementSession ? (
+        <SalesEnablementSidebar onStepChange={onSalesEnablementStepChange}
+          session={salesEnablementSession} />
       ) : null}
 
       <div className="sidebar-footer">
