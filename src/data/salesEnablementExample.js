@@ -4,8 +4,8 @@ const asOf = "2026-09-06";
 const source = (id, title, locator, sourceClass = "local_context") => ({
   id, title, locator, sourceClass, asOf,
 });
-const evidence = (id, claim, sourceIds, evidenceClass, buyerImplication, safeUse) => ({
-  id, claim, sourceIds, evidenceClass, confidence: "bounded", buyerImplication, safeUse,
+const evidence = (id, claim, sourceIds, evidenceClass, confidence, buyerImplication, safeUse) => ({
+  id, claim, sourceIds, evidenceClass, confidence, buyerImplication, safeUse,
 });
 
 const sources = [
@@ -36,16 +36,16 @@ const slideRecords = [
 }));
 
 const research = [
-  ["company_positioning", "The company context supports a production-oriented evaluation posture.", "retell-company-context"],
-  ["product_technical", "Technical ownership centers on production controls and workflow observability.", "retell-technical-owner"],
-  ["executive_buyer", "The executive case is a bounded pilot with clear business and operating ownership.", "retell-audience-gap-matrix"],
-  ["technical_buyer", "Technical reviewers need implementation owners and evidence review criteria.", "retell-technical-owner"],
-  ["market_alternatives", "Market context supports comparing operating approaches without public competitor claims.", "retell-market-context"],
-  ["proof_claims", "The claim ledger distinguishes sourced statements from claims that need validation.", "retell-claim-ledger"],
-  ["skeptical_review", "Governance concerns make the unresolved proof, ROI, and pricing gaps material.", "retell-governance-approver"],
-].map(([id, summary, sourceId]) => ({
+  ["company_positioning", "The company context supports a production-oriented evaluation posture.", "retell-company-context", "company_claim", "medium"],
+  ["product_technical", "Technical ownership centers on production controls and workflow observability.", "retell-technical-owner", "field_signal", "medium"],
+  ["executive_buyer", "The executive case is a bounded pilot with clear business and operating ownership.", "retell-audience-gap-matrix", "inference", "low"],
+  ["technical_buyer", "Technical reviewers need implementation owners and evidence review criteria.", "retell-technical-owner", "field_signal", "medium"],
+  ["market_alternatives", "Market context supports comparing operating approaches without public competitor claims.", "retell-market-context", "field_signal", "medium"],
+  ["proof_claims", "The claim ledger distinguishes sourced statements from claims that need validation.", "retell-claim-ledger", "company_claim", "medium"],
+  ["skeptical_review", "Governance concerns make the unresolved proof, ROI, and pricing gaps material.", "retell-governance-approver", "field_signal", "medium"],
+].map(([id, summary, sourceId, evidenceClass, confidence]) => ({
   id, summary,
-  evidence: [evidence(id + "-evidence", summary, [sourceId], "local_reference",
+  evidence: [evidence(id + "-evidence", summary, [sourceId], evidenceClass, confidence,
     "Use this to guide the pilot discussion.", "Keep the claim linked to its cited local reference.")],
 }));
 

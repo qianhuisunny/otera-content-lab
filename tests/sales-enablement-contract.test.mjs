@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   validatePublicSalesEnablementRun,
@@ -48,4 +49,25 @@ test("invalid artifacts never pass as approved collateral", () => {
   const invalid = structuredClone(RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact);
   invalid.slides.pop();
   assert.throws(() => validateSalesEnablementArtifact(invalid), /11 slides/i);
+});
+
+test("evidence uses the canonical classifications and schema-matched bounds", () => {
+  const invalidClass = structuredClone(RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact);
+  invalidClass.research[0].evidence[0].evidenceClass = "local_reference";
+  assert.throws(() => validateSalesEnablementArtifact(invalidClass), /evidence class/i);
+  const invalidConfidence = structuredClone(RETELL_SALES_ENABLEMENT_EXAMPLE_RUN.artifact);
+  invalidConfidence.research[0].evidence[0].confidence = "bounded";
+  assert.throws(() => validateSalesEnablementArtifact(invalidConfidence), /confidence/i);
+
+  const schema = JSON.parse(readFileSync(new URL(
+    "../skills/sales-enablement/schemas/run-output.schema.json", import.meta.url), "utf8"));
+  const evidence = schema.$defs.evidence.properties;
+  assert.deepEqual(evidence.evidenceClass.enum,
+    ["verified_fact", "company_claim", "field_signal", "inference"]);
+  assert.deepEqual(evidence.confidence.enum, ["high", "medium", "low"]);
+  assert.equal(evidence.sourceIds.minItems, 1);
+  assert.equal(evidence.sourceIds.maxItems, 20);
+  assert.equal(evidence.sourceIds.uniqueItems, true);
+  const headline = schema.$defs.slide.properties.headline;
+  assert.equal(schema.$defs[headline.$ref.slice("#/$defs/".length)].maxLength, 500);
 });

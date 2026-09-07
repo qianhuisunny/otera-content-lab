@@ -24,6 +24,10 @@ const RUN_STATUSES = Object.freeze(["queued", "in_progress", "completed", "faile
 const STAGE_STATUSES = Object.freeze(["pending", "active", "complete", "failed"]);
 const WORKSTREAM_STATUSES = Object.freeze(["queued", "running", "complete", "failed"]);
 const SOURCE_CLASSES = Object.freeze(["local_context", "company_source", "third_party", "inference"]);
+const EVIDENCE_CLASSES = Object.freeze([
+  "verified_fact", "company_claim", "field_signal", "inference",
+]);
+const CONFIDENCE_LEVELS = Object.freeze(["high", "medium", "low"]);
 
 const invalid = (message) => { throw new TypeError(message); };
 const object = (value, message) => {
@@ -139,8 +143,8 @@ const validateEvidence = (value, sourceIds) => {
     id: text(value.id, "evidence id", 200),
     claim: text(value.claim, "evidence claim", 6000),
     sourceIds: resolvedSourceIds,
-    evidenceClass: text(value.evidenceClass, "evidence class", 100),
-    confidence: text(value.confidence, "evidence confidence", 100),
+    evidenceClass: enumValue(value.evidenceClass, EVIDENCE_CLASSES, "evidence class"),
+    confidence: enumValue(value.confidence, CONFIDENCE_LEVELS, "confidence"),
     buyerImplication: text(value.buyerImplication, "buyer implication", 2000),
     safeUse: text(value.safeUse, "safe use", 2000),
   };
