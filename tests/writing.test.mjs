@@ -344,7 +344,7 @@ test("editor value synchronization preserves matching DOM and applies external c
   });
 });
 
-test("Writing workspace wires all four screens to the approved session", async (t) => {
+test("Writing workspace wires all four screens through the shared Content Canvas", async (t) => {
   await withVite(t, async (vite) => {
     const { WritingWorkspace } = await vite.ssrLoadModule(
       "/src/components/writing/WritingWorkspace.jsx",
@@ -360,6 +360,7 @@ test("Writing workspace wires all four screens to the approved session", async (
         React.createElement(WritingWorkspace, { session, dispatch: () => {} }),
       );
       assert.match(markup, new RegExp(expected.replace(/[&]/g, "&amp;")));
+      assert.match(markup, /<section class="writing-page">/);
     }
   });
 });

@@ -1,8 +1,16 @@
-.writing-runtime { width: 100%; min-width: 0; }
+.writing-runtime {
+  --writing-message-max-width: 72rem;
+  --writing-content-canvas-max-width: 62rem;
+
+  width: 100%;
+  min-width: 0;
+}
+
 .writing-generation-notice {
-  margin: 1rem auto;
+  margin-block: 1rem;
+  margin-inline: auto;
   padding: 0.75rem 1rem;
-  max-width: 72rem;
+  max-width: var(--writing-message-max-width);
   scroll-margin-top: 5rem;
   border: 1px solid var(--qh-border-default, #dededb);
   border-radius: 0.5rem;

@@ -28,6 +28,7 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - The Long-Form Blog Article tile opens a frontend-only writing workspace initialized from the selected company. Preserve same-company in-memory edits, keep the primary sidebar limited to `Context` / `Workflow`, and return to `Workflow` on exit.
 - Writing Inspector visibility is automatic by step: Brief has no inspector, Outline shows an `LLM as a Judge` inspector, Draft has no inspector, and Review shows the Coverage/evaluation inspector. Do not add a manual inspector open/close toggle.
 - At the 1470px target viewport, preserve the three-column writing composition: `240px` sidebar, approximately `585px` detail pane, and approximately `645px` Inspector.
+- Treat every `.writing-page` as the Writing Content Canvas. On pages without an Inspector, align the Canvas outer inline-start edge to the centered `72rem` generation-notice rail while preserving the Canvas `62rem` maximum width; do not independently center the narrower Canvas. On pages with an Inspector, reset that rail so the Canvas fills the `585px` Detail Pane. Apply this contract to every current and future Writing step.
 
 ## Multi-company research constraints
 

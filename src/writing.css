@@ -81,7 +81,8 @@
 
 .writing-shell[data-has-inspector="true"] .writing-page {
   max-width: none;
-  margin-inline: 0;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
 }
 
 .writing-inspector {
@@ -305,8 +306,12 @@
 
 .writing-page {
   width: 100%;
-  max-width: 62rem;
-  margin-inline: auto;
+  max-width: var(--writing-content-canvas-max-width);
+  margin-inline-start: max(
+    0rem,
+    calc((100% - var(--writing-message-max-width)) / 2)
+  );
+  margin-inline-end: auto;
   padding: 3rem 2.75rem 6rem;
 }
 
